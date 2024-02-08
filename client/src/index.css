@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@font-face {
+  font-family: "Afacad";
+  src: local("Afacad"),
+    url("./fonts/Afacad/Afacad-VariableFont_wght.ttf") format("truetype");
+}
+html {
+  font-size: 16px;
+}
+body {
+  margin: 0;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: "Afacad";
+}
+#landing_page {
+  background-image: url("./assets/images/brick_wall.jpg");
+}
+
+.custom-grid {
+  grid-template-columns: 2fr 1fr;
+}
