@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import red_brick_wall from "../assets/images/red_brick_wall.jpg";
 import { Link } from "react-router-dom";
 
 function SignUp() {
@@ -23,13 +22,8 @@ function SignUp() {
     }
   };
   return (
-    <div className="grid custom-grid">
-      <img
-        src={red_brick_wall}
-        alt="red_brick"
-        className="h-screen w-screen object-cover object-center"
-      />
-      <div className="flex flex-col items-center justify-center">
+    <div className="h-screen w-auto flex justify-end">
+      <div className="flex flex-col items-center justify-center bg-white w-[70vw]">
         <h1 className="text-[2rem] my-10">Sign Up</h1>
         <form className="flex flex-col gap-2">
           <div className="grid grid-cols-2 items-center">
