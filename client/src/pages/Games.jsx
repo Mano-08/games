@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import whack_a_mole from "../assets/images/diglet.jpeg";
+import whack_a_plane from "../assets/images/whackAPlane.gif";
 import GameCard from "../components/GameCard";
 
 function Games() {
@@ -13,19 +13,12 @@ function Games() {
           signin
         </Link>
       </div>
-      <div className="bg-neutral-800 h-[80vh] overflow-x-hidden overflow-y-auto px-4 flex flex-col gap-4 py-12 rounded-[10px]">
+      <div className="bg-neutral-800 h-[80vh] overflow-x-hidden overflow-y-auto p-4 flex flex-col gap-4 rounded-[10px]">
         <GameCard
-          name="Whack a Mole"
-          href="/games/whack-a-mole"
-          image={whack_a_mole}
-          description="Whack the moles as they pop up."
-        />
-
-        <GameCard
-          name="Whack a Mole"
-          href="/games/whack-a-mole"
-          image={whack_a_mole}
-          description="Whack the moles as they pop up."
+          name="Whack a Plane"
+          href="/games/whack-a-plane"
+          image={whack_a_plane}
+          description="Whack the planes as they show up."
         />
       </div>
     </div>

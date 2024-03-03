@@ -1,8 +1,16 @@
 import bg_img from "../assets/images/grass.jpg";
+import { useLocation } from "react-router-dom";
 import cloud1 from "../assets/images/cloud1.png";
 import cloud2 from "../assets/images/cloud2.png";
 
 function Layout({ children }) {
+  const location = useLocation();
+  const { pathname } = location;
+  if (
+    pathname === "/games/whack-a-plane" ||
+    pathname === "/games/whack-a-plane/play"
+  )
+    return <div className="bg-[#56caff] h-screen w-screen">{children}</div>;
   return (
     <div className="bg-custom overflow-x-hidden overflow-y-hidden relative">
       <img

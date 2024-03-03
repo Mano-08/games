@@ -7,7 +7,7 @@ function GameCard({ name, href, image, description }) {
       <img
         src={image}
         alt={name}
-        className="h-[50vh] rounded-2xl w-1/2 object-cover"
+        className="h-[50vh] rounded-[6px] w-1/2 object-cover"
       />
       <div className="flex flex-col gap-4 py-2">
         <h1>{name}</h1>
