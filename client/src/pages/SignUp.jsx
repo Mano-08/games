@@ -21,6 +21,30 @@ function SignUp() {
         break;
     }
   };
+
+  const handleRegister = async (event) => {
+    event.preventDefault();
+    try {
+      const url = "http://localhost:5000/api/register";
+      const response = await fetch(url, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userEmail, userPassword }),
+      });
+      if (response.error) {
+        console.error(response.error);
+      } else {
+        const data = await response.json();
+        console.log(data);
+      }
+    } catch (error) {
+      console.error("Error registering user:", error);
+    }
+  };
+
   return (
     <div className="h-screen w-auto flex justify-end">
       <div className="flex flex-col items-center justify-center bg-white w-[70vw]">
@@ -45,6 +69,7 @@ function SignUp() {
               value={confirmUserEmail}
               onChange={handleChange}
               placeholder="example@outlook.com"
+              required
               className="border-b border-black outline-none px-0.5 py-1"
             />
           </div>
@@ -55,12 +80,14 @@ function SignUp() {
               name="userPassword"
               value={userPassword}
               onChange={handleChange}
+              required
               className="border-b border-black outline-none px-2 py-1"
             />
           </div>
           <div className="flex items-center justify-center">
             <button
               type="submit"
+              onClick={handleRegister}
               className="my-12 rounded-md text-white px-5 py-1 bg-green-600 hover:bg-green-500"
             >
               Create Account

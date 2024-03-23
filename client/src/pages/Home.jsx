@@ -1,5 +1,10 @@
 import { Link } from "react-router-dom";
 function Home() {
+  const handleClick = async () => {
+    await fetch("http://127.0.0.1:5000/api/register/1234", { mode: "no-cors" })
+      .then(() => console.log("get a response back"))
+      .catch((err) => console.log(err));
+  };
   return (
     <main className="h-screen w-screen flex justify-center items-center">
       <div className="flex flex-col gap-6 items-center text-center">
@@ -14,6 +19,7 @@ function Home() {
           >
             Get Started
           </Link>
+          <button onClick={handleClick}>click here for cookies</button>
         </span>
       </div>
     </main>
