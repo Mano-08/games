@@ -10,7 +10,21 @@ function Layout({ children }) {
     pathname === "/games/whack-a-plane" ||
     pathname === "/games/whack-a-plane/play"
   )
-    return <div className="bg-[#56caff] h-screen w-screen">{children}</div>;
+    return (
+      <div className="bg-[#56caff] h-screen w-screen relative overflow-x-hidden overflow-y-hidden">
+        <img
+          src={cloud1}
+          alt="a cloud"
+          className="h-[27vh] absolute w-auto custom-animation-cloud1"
+        />
+        <img
+          src={cloud2}
+          alt="a cloud"
+          className="h-[33vh] absolute w-auto custom-animation-cloud2"
+        />
+        <div className="relative z-[999999]">{children}</div>
+      </div>
+    );
   return (
     <div className="bg-custom overflow-x-hidden overflow-y-hidden relative">
       <img
@@ -28,7 +42,7 @@ function Layout({ children }) {
         alt="a cloud"
         className="h-[33vh] absolute w-auto custom-animation-cloud2"
       />
-      <div className="relative z-[100] h-screen w-screen overflow-x-hidden overflow-y-auto">
+      <div className="relative z-[100] h-screen w-screen overflow-hidden">
         {children}
       </div>
     </div>

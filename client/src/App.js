@@ -6,6 +6,7 @@ import SignIn from "./pages/SignIn";
 import Layout from "./components/Layout";
 import Games from "./pages/Games";
 import WhackAPlane from "./pages/WhackAPlane";
+import Battleship from "./pages/Battleship";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/signin" element={<SignIn />} />
           <Route path="/games" element={<Games />} />
           <Route path="/games/whack-a-plane" element={<WhackAPlane />} />
+          <Route path="/games/battleship" element={<Battleship />} />
         </Routes>
       </Layout>
     </Router>

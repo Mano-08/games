@@ -3,10 +3,12 @@ import bombImage from "../assets/images/bomb.jpg";
 import planeImage from "../assets/images/plane.png";
 import goldenPlaneImage from "../assets/images/golden_plane.png";
 import blastImage from "../assets/images/explode.jpg";
+import Button from "../components/Button";
+import { useNavigate } from "react-router-dom";
 
 function WhackAPlane() {
   const canvasRef = useRef(null);
-  const timerTag = useRef(null);
+  const navigate = useNavigate();
   const bomb = new Image();
   bomb.src = bombImage;
   const plane = new Image();
@@ -155,7 +157,7 @@ function WhackAPlane() {
     <>
       {gameStatus === "uninitiated" && (
         <main className="w-screen h-screen overflow-x-hidden overflow-y-auto px-[25vw] py-5">
-          <div className="flex flex-col gap-3 p-4 items-center outline outline-2 outline-black rounded-2xl bg-sky-200">
+          <div className="flex flex-col gap-3 p-4 items-center outline outline-2 outline-black rounded-2xl bg-sky-200/50 backdrop-blur-sm	">
             <img
               src={goldenPlaneImage}
               alt="main"
@@ -187,33 +189,45 @@ function WhackAPlane() {
                 </li>
               </ul>
             </div>
-            <button
-              onClick={handleStart}
-              className="bg-green-600 hover:outline outline-green-400 text-base rounded-lg px-8 py-3 transition-colors duration-300 text-white"
-            >
-              Start Game
-            </button>
+            <Button
+              callback={() => handleStart()}
+              theme="green"
+              text="Start Game"
+            />
           </div>
         </main>
       )}
       {gameStatus === "initiated" && (
-        <>
+        <main className="flex flex-col gap-10 items-center w-screen h-screen py-5">
           <p>Score: {score}</p>
           <canvas
             ref={canvasRef}
             id="canvasElem"
             height={500}
             width={500}
-            className="border border-black"
+            className="border border-black bg-white"
           />
-        </>
+        </main>
       )}
       {gameStatus === "over" && (
-        <>
-          <div>Game Over</div>
-          <p>Score: {score}</p>
-          <button onClick={handleStart}>Play again</button>
-        </>
+        <main className="flex items-center justify-center h-screen w-screen">
+          <div className="flex-col flex gap-3 items-center p-16 shadow-md rounded-2xl bg-neutral-200">
+            <h1 className="font-semibold text-[3rem]">Game Over!</h1>
+            <p className="py-5">Score: {score}</p>
+            <Button
+              text="Play Again!"
+              theme="green"
+              className="w-3/5"
+              callback={() => handleStart()}
+            />
+            <Button
+              text="Exit"
+              theme="red"
+              className="w-3/5"
+              callback={() => navigate("/games")}
+            />
+          </div>
+        </main>
       )}
     </>
   );

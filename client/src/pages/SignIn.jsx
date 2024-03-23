@@ -1,13 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 function SignIn() {
   const [userEmail, setUserEmail] = useState("");
+  const [capsLockOn, setCapsLockOn] = useState(false);
   const [userPassword, setUserPassword] = useState("");
   const handleChange = (e) => {
     e.target.name === "userEmail" && setUserEmail(e.target.value);
     e.target.name === "userPassword" && setUserPassword(e.target.value);
   };
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      const capsLockKey =
+        event.getModifierState && event.getModifierState("CapsLock");
+      setCapsLockOn(capsLockKey);
+    };
+
+    document.addEventListener("keydown", handleKeyPress);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyPress);
+    };
+  }, []);
   return (
     <div className="h-screen w-auto flex justify-end">
       <div className="flex flex-col items-center justify-center bg-white w-[70vw]">
@@ -43,12 +57,15 @@ function SignIn() {
             </button>
           </div>
         </form>
-        <p className="text-neutral-600 text-sm py-6">
-          don&apos;t have an account?{" "}
-          <Link to="/signup" className="text-blue-500 underline">
-            Sign up
-          </Link>
-        </p>
+        <div className="flex flex-col items-center gap-2 py-6">
+          {capsLockOn && <p className="text-yellow-600">Caps lock is on!</p>}
+          <p className="text-neutral-600 text-sm">
+            don&apos;t have an account?{" "}
+            <Link to="/signup" className="text-blue-500 underline">
+              Sign up
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

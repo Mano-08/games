@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import Button from "./Button";
 
 function GameCard({ name, href, image, description }) {
   return (
@@ -7,17 +8,13 @@ function GameCard({ name, href, image, description }) {
       <img
         src={image}
         alt={name}
-        className="h-[50vh] rounded-[6px] w-1/2 object-cover"
+        className="h-[50vh] w-[30vw] rounded-[6px] object-cover"
       />
       <div className="flex flex-col gap-4 py-2">
         <h1>{name}</h1>
         <p className="text-neutral-400">{description}</p>
         <div>
-          <button
-            className={`bg-green-600 hover:outline outline-green-400 text-base rounded-lg px-8 py-3 transition-colors duration-300 text-white`}
-          >
-            Play
-          </button>
+          <Button text="Play" theme="green" />
         </div>
       </div>
     </Link>
