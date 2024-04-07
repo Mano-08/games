@@ -4,11 +4,13 @@ const bodyParser = require("body-parser");
 const http = require("http");
 const { Server } = require("socket.io");
 const pool = require("./db/pool");
+const cookieParser = require("cookie-parser");
 
 const { getClient } = require("./db/pool");
 
 const cors = require("cors");
 const app = express();
+app.use(cookieParser());
 const server = http.createServer(app);
 const io = new Server(server);
 app.use(bodyParser.json());
@@ -28,9 +30,11 @@ io.on("connection", (socket) => {
     if (!clients || clients.size < 2) {
       socket.join(room);
       io.sockets.adapter.rooms.get(room).size === 1 &&
-        io.to(room).emit("playerJoined", { timeline: "first", playerId });
+        io.to(room).emit("playerJoined", { timeline: "first", playerId, room });
       io.sockets.adapter.rooms.get(room).size === 2 &&
-        io.to(room).emit("playerJoined", { timeline: "second", playerId });
+        io
+          .to(room)
+          .emit("playerJoined", { timeline: "second", playerId, room });
     } else {
       socket.emit("full", room);
     }

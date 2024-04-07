@@ -21,7 +21,6 @@ const signin = async (req, res) => {
         const token = jwt.sign({ userId: username }, process.env.JWTSECRETKEY, {
           expiresIn: "30d",
         });
-        res.cookie("authtoken", token, { httpOnly: true });
         res.status(200).json({ token });
       } else {
         res.status(400).json({ message: "invalidpassword" });
@@ -63,7 +62,6 @@ const signup = async (req, res) => {
             }
           );
 
-          res.cookie("authtoken", token, { httpOnly: true });
           res.status(200).json({ token });
         });
       });

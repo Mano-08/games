@@ -1,47 +1,26 @@
 import React, { useEffect } from "react";
 import io from "socket.io-client";
+import SignUp from "../components/SignUp";
+import SignIn from "../components/SignIn";
 import navyShip from "../assets/images/battleship/navyship.png";
 import { toast } from "react-hot-toast";
 import Button from "../components/Button";
 import { initialBoardConfig, allShips } from "../utils/initialBoardConfig";
+import { UserInfoContext } from "../App";
 
 const socket = io.connect("http://127.0.0.1:5000", {
   transports: ["websocket"],
 });
 
 function Battleship() {
+  const { user } = React.useContext(UserInfoContext);
   const [selectedShip, setSelectedShip] = React.useState(null);
   const [vertical, setVertical] = React.useState(false);
   const [winner, setWinner] = React.useState(null);
   const [whoseTurn, setWhoseTurn] = React.useState(null);
   const [shipsWrecked, setShipsWrecked] = React.useState(0);
-  const [myShipPlacements, setMyShipPlacement] = React.useState({
-    destroyer: {
-      length: 2,
-      vertical: false,
-      startIndex: { rowStart: 0, colStart: 0 },
-    },
-    submarine: {
-      length: 3,
-      vertical: false,
-      startIndex: { rowStart: 1, colStart: 0 },
-    },
-    cruiser: {
-      length: 3,
-      vertical: false,
-      startIndex: { rowStart: 2, colStart: 0 },
-    },
-    battleship: {
-      length: 4,
-      vertical: false,
-      startIndex: { rowStart: 3, colStart: 0 },
-    },
-    carrier: {
-      length: 5,
-      vertical: false,
-      startIndex: { rowStart: 4, colStart: 0 },
-    },
-  });
+  const [torpedoAttack, setTorpedoAttack] = React.useState(null);
+  const [myShipPlacements, setMyShipPlacement] = React.useState({});
   const [isOpponentReady, setIsOpponentReady] = React.useState(false);
   const [isPlayerReady, setIsPlayerReady] = React.useState(false);
   const [allShipsPlaced, setAllShipsPlaced] = React.useState(false);
@@ -68,7 +47,6 @@ function Battleship() {
     });
 
     socket.on("youWon", ({ playerId }) => {
-      console.log("HIIII");
       if (playerId !== socket.id) {
         setWinner("player");
         setDisplay({
@@ -89,53 +67,7 @@ function Battleship() {
     });
 
     socket.on("dropTorpedo", (data) => {
-      if (data.playerId !== socket.id) {
-        setWhoseTurn("player");
-        if (myBoard[data.rindex][data.cindex].ship === true) {
-          const { id } = myBoard[data.rindex][data.cindex].details;
-          console.log(id);
-          const {
-            length,
-            vertical,
-            startIndex: { rowStart, colStart },
-          } = myShipPlacements[id];
-          if (vertical) {
-            let wrecked = true;
-            for (let row = rowStart; row < rowStart + length; row++) {
-              if (myBoard[row][colStart].details.burst === false) {
-                wrecked = false;
-                break;
-              }
-            }
-            if (wrecked) {
-              setShipsWrecked((oldCount) => oldCount + 1);
-            }
-          } else {
-            let wrecked = true;
-            for (let col = colStart; col < colStart + length; col++) {
-              if (
-                myBoard[rowStart][col].details.burst === false &&
-                col !== data.cindex
-              ) {
-                wrecked = false;
-                break;
-              }
-            }
-            console.log(myBoard[rowStart]);
-            if (wrecked) {
-              setShipsWrecked((oldCount) => oldCount + 1);
-            }
-          }
-        }
-
-        setMyboard((oldData) => {
-          const newData = [...oldData];
-          const updatedElement = { ...oldData[data.rindex][data.cindex] };
-          updatedElement.details.burst = true;
-          newData[data.rindex][data.cindex] = updatedElement;
-          return newData;
-        });
-      }
+      setTorpedoAttack(data);
     });
 
     socket.on("restartGameRequest", (data) => {
@@ -188,6 +120,8 @@ function Battleship() {
       setGameStatus("initiated");
       if (data.timeline === "first" && data.playerId === socket.id) {
         setWhoseTurn("player");
+        setDisplay({ display: true, regarding: "createRoom", data: data.room });
+        toast.success("Room created successfully");
       } else if (data.timeline === "second") {
         removeDialogbox();
         if (data.playerId === socket.id) {
@@ -209,9 +143,65 @@ function Battleship() {
   }, []);
 
   useEffect(() => {
-    if (shipsWrecked === 1) {
+    if (torpedoAttack) {
+      handleTorpedoAttact(torpedoAttack);
+    }
+  }, [torpedoAttack]);
+
+  function handleTorpedoAttact(data) {
+    if (data.playerId !== socket.id) {
+      setWhoseTurn("player");
+      if (myBoard[data.rindex][data.cindex].ship === true) {
+        const { id } = myBoard[data.rindex][data.cindex].details;
+        console.log(myShipPlacements, "myship placement");
+        console.log(id);
+        const {
+          length,
+          vertical,
+          startIndex: { rowStart, colStart },
+        } = myShipPlacements[id];
+        if (vertical) {
+          let wrecked = true;
+          for (let row = rowStart; row < rowStart + length; row++) {
+            if (myBoard[row][colStart].details.burst === false) {
+              wrecked = false;
+              break;
+            }
+          }
+          if (wrecked) {
+            setShipsWrecked((oldCount) => oldCount + 1);
+          }
+        } else {
+          let wrecked = true;
+          for (let col = colStart; col < colStart + length; col++) {
+            if (
+              myBoard[rowStart][col].details.burst === false &&
+              col !== data.cindex
+            ) {
+              wrecked = false;
+              break;
+            }
+          }
+          if (wrecked) {
+            setShipsWrecked((oldCount) => oldCount + 1);
+          }
+        }
+      }
+
+      setMyboard((oldData) => {
+        const newData = [...oldData];
+        const updatedElement = { ...oldData[data.rindex][data.cindex] };
+        updatedElement.details.burst = true;
+        newData[data.rindex][data.cindex] = updatedElement;
+        return newData;
+      });
+    }
+  }
+
+  useEffect(() => {
+    if (shipsWrecked === 5) {
       setWinner("opponent");
-      toast("OPPONENT WON!");
+      toast("You Lost! Better luck next time!");
       setDisplay({
         display: true,
         regarding: "gameCompleted",
@@ -223,15 +213,23 @@ function Battleship() {
   }, [shipsWrecked]);
 
   const handleJoinRoom = () => {
-    setDisplay({ display: true, regarding: "joinRoom", data: null });
+    if (!user) {
+      toast.error("Please login to join room");
+      setDisplay({ display: true, regarding: "signin", data: null });
+    } else {
+      setDisplay({ display: true, regarding: "joinRoom", data: null });
+    }
   };
 
   const handleCreateRoom = () => {
-    const currentTime = new Date().toISOString();
-    const roomName = socket.id + currentTime;
-    setDisplay({ display: true, regarding: "createRoom", data: roomName });
-    toast.success("Room created successfully");
-    socket.emit("join", { room: roomName, playerId: socket.id });
+    if (!user) {
+      toast.error("Please login to create room");
+      setDisplay({ display: true, regarding: "signin", data: null });
+    } else {
+      const currentTime = new Date().toISOString();
+      const roomName = socket.id + currentTime;
+      socket.emit("join", { room: roomName, playerId: socket.id });
+    }
   };
 
   const handleJoinGivenRoom = () => {
@@ -251,11 +249,12 @@ function Battleship() {
 
   const handleSelectShip = (selectedShip) => {
     setMyShips((oldData) =>
-      oldData.map((ship) =>
-        ship.id === selectedShip.id
-          ? { ...ship, selected: !ship.selected }
-          : { ...ship, selected: false }
-      )
+      oldData.map((ship) => {
+        return {
+          ...ship,
+          selected: ship.id === selectedShip.id ? !ship.selected : false,
+        };
+      })
     );
 
     setSelectedShip(selectedShip);
@@ -363,6 +362,10 @@ function Battleship() {
     }
   };
 
+  useEffect(() => {
+    console.log(myShipPlacements);
+  }, [myShipPlacements]);
+
   const handlePlaceShip = ({ rindex, cindex, ship }) => {
     if (ship.validHover) {
       setMyShipPlacement((oldData) => {
@@ -381,43 +384,34 @@ function Battleship() {
           for (let row = rindex; row < rindex + selectedShip.length; row++) {
             const updatedElement = { ...oldData[row][cindex] };
             updatedElement.ship = true;
-            updatedElement.details.id = ship.id;
+            updatedElement.details.id = selectedShip.id;
             updatedElement.validHover = null;
             newMyBoard[row][cindex] = updatedElement;
           }
           return newMyBoard;
         });
-        setMyShips((oldData) =>
-          oldData.map((ship) =>
-            ship.id === selectedShip.id
-              ? { ...ship, selected: false, placed: true }
-              : ship
-          )
-        );
-
-        setSelectedShip(null);
       } else {
         setMyboard((oldData) => {
           const newMyBoard = [...oldData];
           for (let col = cindex; col < cindex + selectedShip.length; col++) {
             const updatedElement = { ...oldData[rindex][col] };
             updatedElement.ship = true;
-            updatedElement.details.id = ship.id;
+            updatedElement.details.id = selectedShip.id;
             updatedElement.validHover = null;
             newMyBoard[rindex][col] = updatedElement;
           }
           return newMyBoard;
         });
-        setMyShips((oldData) =>
-          oldData.map((ship) =>
-            ship.id === selectedShip.id
-              ? { ...ship, selected: false, placed: true }
-              : ship
-          )
-        );
-
-        setSelectedShip(null);
       }
+      setMyShips((oldData) =>
+        oldData.map((ship) =>
+          ship.id === selectedShip.id
+            ? { ...ship, selected: false, placed: true }
+            : ship
+        )
+      );
+
+      setSelectedShip(null);
     }
   };
 
@@ -449,33 +443,7 @@ function Battleship() {
     setAllShipsPlaced(false);
     setIsOpponentReady(false);
     setIsPlayerReady(false);
-    setMyShipPlacement({
-      destroyer: {
-        length: 2,
-        vertical: false,
-        startIndex: { rowStart: 0, colStart: 0 },
-      },
-      submarine: {
-        length: 3,
-        vertical: false,
-        startIndex: { rowStart: 1, colStart: 0 },
-      },
-      cruiser: {
-        length: 3,
-        vertical: false,
-        startIndex: { rowStart: 2, colStart: 0 },
-      },
-      battleship: {
-        length: 4,
-        vertical: false,
-        startIndex: { rowStart: 3, colStart: 0 },
-      },
-      carrier: {
-        length: 5,
-        vertical: false,
-        startIndex: { rowStart: 4, colStart: 0 },
-      },
-    });
+    setMyShipPlacement({});
     setOpponentsBoard((oldData) => {
       for (let row = 0; row < 10; row++) {
         for (let col = 0; col < 10; col++) {
@@ -532,19 +500,25 @@ function Battleship() {
         const updatedElement = { ...oldData[rindex][cindex] };
         updatedElement.details.burst = true;
         newData[rindex][cindex] = updatedElement;
+        socket.emit("dropTorpedo", {
+          room,
+          rindex,
+          cindex,
+          playerId: socket.id,
+        });
+
         return newData;
       } else {
         toast("Torpedo already dropped here!", {});
         return oldData;
       }
     });
-    socket.emit("dropTorpedo", { room, rindex, cindex, playerId: socket.id });
   };
   return (
     <>
       {display.display && display.regarding === "createRoom" && (
         <>
-          <div className="bg-black/30 h-screen w-screen fixed top-0 left-0 z-[1000]" />
+          <div className="bg-black/60 h-screen w-screen fixed top-0 left-0 z-[1000]" />
           <div className="h-[30vh] top-[35vh] left-[20vw] w-[60vw] fixed z-[1005] bg-white">
             Share this room to your friend
             <Button
@@ -564,7 +538,7 @@ function Battleship() {
         <>
           <div
             onClick={removeDialogbox}
-            className="bg-black/30 h-screen w-screen fixed top-0 left-0 z-[1000]"
+            className="bg-black/60 h-screen w-screen fixed top-0 left-0 z-[1000]"
           />
           <div className="h-[30vh] top-[35vh] left-[20vw] w-[60vw] fixed z-[1005] bg-white">
             Enter room code to join{" "}
@@ -581,9 +555,33 @@ function Battleship() {
           </div>
         </>
       )}
+      {display.display &&
+        (display.regarding === "signin" || display.regarding === "signup") && (
+          <>
+            <div
+              className="fixed top-0 left-0 h-screen w-screen bg-black/60 z-[1000]"
+              onClick={removeDialogbox}
+            />
+            {display.regarding === "signin" ? (
+              <SignIn
+                callback={() =>
+                  setDisplay({ display: true, regarding: "signup", data: null })
+                }
+                success={removeDialogbox}
+              />
+            ) : (
+              <SignUp
+                success={removeDialogbox}
+                callback={() =>
+                  setDisplay({ display: true, regarding: "signin", data: null })
+                }
+              />
+            )}
+          </>
+        )}
       {display.display && display.regarding === "gameCompleted" && (
         <>
-          <div className="bg-black/30 h-screen w-screen fixed top-0 left-0 z-[1000]" />
+          <div className="bg-black/60 h-screen w-screen fixed top-0 left-0 z-[1000]" />
           <div className="h-[30vh] top-[35vh] left-[20vw] w-[60vw] fixed z-[1005] bg-white">
             <div className="flex flex-col">
               {winner === "player" ? (
