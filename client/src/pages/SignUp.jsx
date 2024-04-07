@@ -1,48 +1,97 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { toast } from "react-hot-toast";
 import { Link } from "react-router-dom";
 
 function SignUp() {
-  const [userEmail, setUserEmail] = useState("");
-  const [confirmUserEmail, setConfirmUserEmail] = useState("");
-  const [userPassword, setUserPassword] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+    const usernamePattern = /^[a-zA-Z0-9]*$/;
     switch (name) {
-      case "userEmail":
-        setUserEmail(value);
+      case "username":
+        value.length > 20
+          ? toast.error("Username should be less than 20 characters", {
+              position: "bottom-left",
+            })
+          : usernamePattern.test(value)
+          ? setUsername(value)
+          : toast.error("username cannot contain special characters", {
+              position: "bottom-left",
+            });
         break;
-      case "userPassword":
-        setUserPassword(value);
-        break;
-      case "confirmUserEmail":
-        setConfirmUserEmail(value);
+      case "password":
+        value.length > 16
+          ? toast.error("Password should be less than 16 characters", {
+              position: "bottom-left",
+            })
+          : setPassword(value);
         break;
       default:
         break;
     }
   };
 
+  const signup = async () => {
+    const url = "http://127.0.0.1:5000/api/signup";
+    return await axios.post(url, {
+      username,
+      password,
+    });
+  };
+
   const handleRegister = async (event) => {
     event.preventDefault();
-    try {
-      const url = "http://localhost:5000/api/register";
-      const response = await fetch(url, {
-        method: "POST",
-        mode: "no-cors",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ userEmail, userPassword }),
+    if (username === "") {
+      toast.error("Please enter username", {
+        position: "bottom-left",
       });
-      if (response.error) {
-        console.error(response.error);
-      } else {
-        const data = await response.json();
-        console.log(data);
-      }
-    } catch (error) {
-      console.error("Error registering user:", error);
+      return;
     }
+    if (password === "") {
+      toast.error("Please enter password", {
+        position: "bottom-left",
+      });
+      return;
+    }
+    const usernamePattern = /^[a-zA-Z0-9]*$/;
+    if (!usernamePattern.test(username)) {
+      toast.error("username cannot contain special characters", {
+        position: "bottom-left",
+      });
+      return;
+    }
+    if (password.length < 8) {
+      toast.error("Password should be at least 8 characters long", {
+        position: "bottom-left",
+      });
+      return;
+    }
+
+    toast.promise(
+      signup(),
+      {
+        loading: "Registering...",
+        success: () => {
+          return "Registration successful!";
+        },
+        error: (error) => {
+          if (
+            error.response &&
+            error.response.data &&
+            error.response.data.message === "userexists"
+          ) {
+            return "Username already exists!";
+          }
+          return "Registration failed!";
+        },
+      },
+      {
+        position: "bottom-left",
+      }
+    );
   };
 
   return (
@@ -51,39 +100,30 @@ function SignUp() {
         <h1 className="text-[2rem] my-10">Sign Up</h1>
         <form className="flex flex-col gap-2">
           <div className="grid grid-cols-2 items-center">
-            <label htmlFor="userEmail">Email: </label>
+            <label htmlFor="username">Username: </label>
             <input
               type="text"
-              name="userEmail"
-              value={userEmail}
+              name="username"
+              value={username}
+              autoComplete="off"
               onChange={handleChange}
-              placeholder="example@outlook.com"
+              placeholder="thedracula"
               className="border-b border-black outline-none px-0.5 py-1"
             />
           </div>
+
           <div className="grid grid-cols-2 items-center">
-            <label htmlFor="confirmUserEmail">Confirm User Email: </label>
-            <input
-              type="text"
-              name="confirmUserEmail"
-              value={confirmUserEmail}
-              onChange={handleChange}
-              placeholder="example@outlook.com"
-              required
-              className="border-b border-black outline-none px-0.5 py-1"
-            />
-          </div>
-          <div className="grid grid-cols-2 items-center">
-            <label htmlFor="userPassword">Password: </label>
+            <label htmlFor="password">Password: </label>
             <input
               type="password"
-              name="userPassword"
-              value={userPassword}
+              name="password"
+              value={password}
               onChange={handleChange}
               required
               className="border-b border-black outline-none px-2 py-1"
             />
           </div>
+
           <div className="flex items-center justify-center">
             <button
               type="submit"

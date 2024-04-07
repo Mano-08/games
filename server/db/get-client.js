@@ -11,6 +11,5 @@ module.exports.getClient = async () => {
     ssl: false,
   });
   await client.connect();
-  console.log("connected to db");
   return client;
 };

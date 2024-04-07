@@ -11,7 +11,7 @@ const login = async (req, res) => {
 };
 
 const register = async (req, res) => {
-  console.log("received regeister req");
+  console.log(req.body);
 
   try {
     const db = await getClient();

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import whack_a_plane from "../assets/images/whackAPlane.gif";
-import battle_ship from "../assets/images/battleship.gif";
+import whack_a_plane from "../assets/images/whack-a-plane/whackAPlane.gif";
+import battle_ship from "../assets/images/battleship/battleship.gif";
 import GameCard from "../components/GameCard";
 
 function Games() {

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import bombImage from "../assets/images/bomb.jpg";
-import planeImage from "../assets/images/plane.png";
-import goldenPlaneImage from "../assets/images/golden_plane.png";
-import blastImage from "../assets/images/explode.jpg";
+import bombImage from "../assets/images/whack-a-plane/bomb.jpg";
+import planeImage from "../assets/images/whack-a-plane/plane.png";
+import goldenPlaneImage from "../assets/images/whack-a-plane/golden_plane.png";
+import blastImage from "../assets/images/whack-a-plane/explode.jpg";
 import Button from "../components/Button";
 import { useNavigate } from "react-router-dom";
 

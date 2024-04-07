@@ -1,5 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import Home from "./pages/Home";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
@@ -20,6 +21,7 @@ function App() {
           <Route path="/games/whack-a-plane" element={<WhackAPlane />} />
           <Route path="/games/battleship" element={<Battleship />} />
         </Routes>
+        <Toaster position="bottom-center" reverseOrder={false} />
       </Layout>
     </Router>
   );

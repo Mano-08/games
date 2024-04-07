@@ -85,3 +85,13 @@ body {
   background: rgb(97, 97, 97);
   border-radius: 10px;
 }
+
+/*********************************** BATTLESHIP ****************************************/
+
+.bg-sea {
+  background: url("./assets/images/battleship/ocean.jpg");
+}
+.custom-grid-battleship {
+  grid-template-columns: 1fr 2fr 2fr;
+  gap: 1rem;
+}
