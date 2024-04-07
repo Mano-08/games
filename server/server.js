@@ -2,14 +2,15 @@ const express = require("express");
 const router = require("./routes/router");
 const bodyParser = require("body-parser");
 const http = require("http");
-const socketio = require("socket.io");
+const { Server } = require("socket.io");
+const pool = require("./db/pool");
 
-const { getClient } = require("./db/get-client");
+const { getClient } = require("./db/pool");
 
 const cors = require("cors");
 const app = express();
 const server = http.createServer(app);
-const io = socketio(server);
+const io = new Server(server);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
@@ -22,40 +23,41 @@ app.get("/api/hello/:id", (req, res) => {
 });
 
 io.on("connection", (socket) => {
-  console.log("A user connected");
-
-  socket.on("disconnect", () => {
-    console.log("User disconnected");
-  });
-
-  socket.on("join", (room) => {
+  socket.on("join", ({ room, playerId }) => {
     const clients = io.sockets.adapter.rooms.get(room);
     if (!clients || clients.size < 2) {
       socket.join(room);
-      socket.emit("joined", room);
+      io.sockets.adapter.rooms.get(room).size === 1 &&
+        io.to(room).emit("playerJoined", { timeline: "first", playerId });
+      io.sockets.adapter.rooms.get(room).size === 2 &&
+        io.to(room).emit("playerJoined", { timeline: "second", playerId });
     } else {
       socket.emit("full", room);
     }
   });
-
-  socket.on("move", (data) => {
-    io.to(data.room).emit("move", data);
+  socket.on("youWon", (data) => {
+    console.log(data);
+    io.to(data.room).emit("youWon", data);
+  });
+  socket.on("ready", (data) => {
+    io.to(data.room).emit("ready", data);
+  });
+  socket.on("dropTorpedo", (data) => {
+    io.to(data.room).emit("dropTorpedo", data);
   });
 });
 
 server.listen(PORT, async (req, res) => {
   console.log(`Listening to port ${PORT}`);
-  const db = await getClient();
 
   let createTableQuery = `
   CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL
+    username VARCHAR(20) PRIMARY KEY UNIQUE NOT NULL,
+    password VARCHAR(80) NOT NULL
   );
   `;
 
-  const output = await db.query(createTableQuery);
+  await pool.query(createTableQuery);
 });
 
 app.use("/api", router);
