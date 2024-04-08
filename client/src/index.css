@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@font-face {
+  font-family: "Afacad";
+  src: local("Afacad"),
+    url("./fonts/Afacad/Afacad-VariableFont_wght.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Gamja Flower";
+  src: url("./fonts/Gamja_Flower/GamjaFlower-Regular.ttf");
+}
+@font-face {
+  font-family: "PressStart2P Regular";
+  src: url("./fonts/Press_Start_2P//PressStart2P-Regular.ttf");
+}
+html {
+  font-size: 16px;
+}
+body {
+  margin: 0;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: "PressStart2P Regular";
+}
+
+.bg-custom {
+  background: linear-gradient(0deg, #c5ecff 0%, #2fbcfd 100%);
+}
+@keyframes cloud1 {
+  0% {
+    transform: translateX(-20vw);
+  }
+  100% {
+    transform: translateX(100vw);
+  }
+}
+
+@keyframes cloud2 {
+  0% {
+    transform: translateX(100vw);
+  }
+  100% {
+    transform: translateX(-20vw);
+  }
+}
+.custom-animation-cloud2 {
+  animation: cloud1 infinite 43s ease-out;
+}
+.custom-animation-cloud1 {
+  animation: cloud2 infinite 47s ease-out;
+}
+
+#countdown_timer {
+  left: 0;
+  top: 0;
+  z-index: 999999999999;
+  position: absolute;
+  font-size: 5rem;
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #56caff;
+}
+
+/***********************  SCROLL BAR ALTERATION  **************************/
+
+/* width */
+::-webkit-scrollbar {
+  width: 20px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 5px grey;
+  border-radius: 10px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: rgb(97, 97, 97);
+  border-radius: 10px;
+}
+
+/*********************************** BATTLESHIP ****************************************/
+
+.bg-sea {
+  background: url("./assets/images/battleship/ocean.jpg");
+}
+.custom-grid-battleship {
+  grid-template-columns: 1fr 2fr 2fr;
+  gap: 1rem;
+}
