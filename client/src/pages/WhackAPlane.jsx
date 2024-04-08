@@ -1,13 +1,16 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import bombImage from "../assets/images/whack-a-plane/bomb.jpg";
 import planeImage from "../assets/images/whack-a-plane/plane.png";
 import goldenPlaneImage from "../assets/images/whack-a-plane/golden_plane.png";
 import blastImage from "../assets/images/whack-a-plane/explode.jpg";
 import Button from "../components/Button";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { UserInfoContext } from "../App";
 
 function WhackAPlane() {
   const canvasRef = useRef(null);
+  const COUNTDOWN_TIMER = 75;
   const navigate = useNavigate();
   const bomb = new Image();
   bomb.src = bombImage;
@@ -20,6 +23,8 @@ function WhackAPlane() {
 
   const [score, setScore] = useState(0);
   const [delay, setDelay] = useState(2000);
+  const [highScore, setHighScore] = useState(0);
+  const [countDown, setCountDown] = useState(COUNTDOWN_TIMER);
   const [hitObject, setHitObject] = useState(false);
   const [gameStatus, setGameStatus] = useState("uninitiated");
   const [planePosition, setPlanePosition] = useState({
@@ -30,6 +35,7 @@ function WhackAPlane() {
     isBomb: false,
   });
 
+  const { user, token } = useContext(UserInfoContext);
   const getRandomPosition = () => {
     const canvas = canvasRef.current;
     if (!canvas)
@@ -53,6 +59,33 @@ function WhackAPlane() {
 
     return { x, y, isGolden, isPlane, isBomb };
   };
+
+  useEffect(() => {
+    const getHighScore = async () => {
+      const result = await axios.post(
+        "http://127.0.0.1:5000/api/whackaplane/gethighscore",
+        { token }
+      );
+      setHighScore(result.data.highScore);
+    };
+    getHighScore();
+  }, []);
+
+  const updateHighScore = async () => {
+    await axios.post("http://127.0.0.1:5000/api/whackaplane/updatehighscore", {
+      token,
+      score,
+    });
+  };
+
+  useEffect(() => {
+    if (gameStatus === "over") {
+      if (score > highScore) {
+        updateHighScore();
+        setHighScore(score);
+      }
+    }
+  }, [gameStatus]);
 
   useEffect(() => {
     const handleClick = (event) => {
@@ -116,7 +149,6 @@ function WhackAPlane() {
         setHitObject(false);
         setPlanePosition(getRandomPosition());
       }, delay);
-      console.log(delay);
       canvas.addEventListener("click", handleClick);
       return () => canvas.removeEventListener("click", handleClick);
     }
@@ -128,7 +160,15 @@ function WhackAPlane() {
     });
   };
 
+  const resetGame = () => {
+    setScore(0);
+    setCountDown(COUNTDOWN_TIMER);
+    setHitObject(false);
+    setGameStatus("initiated");
+  };
+
   const handleStart = async () => {
+    resetGame();
     setGameStatus("initiated");
 
     const countDownTimer = document.createElement("p");
@@ -140,23 +180,38 @@ function WhackAPlane() {
     }
     document.body.removeChild(countDownTimer);
     setScore(0);
-    setInterval(() => {
+    const delayInterval = setInterval(() => {
       setDelay((prev) => {
         if (prev - 3 > 500) {
           return prev - 3;
         } else {
+          clearInterval(delayInterval);
           return 500;
         }
+      });
+    }, 1000);
+    let countdownIterations = 0;
+
+    const countdownInterval = setInterval(() => {
+      setCountDown((prev) => {
+        countdownIterations++;
+        if (countdownIterations >= COUNTDOWN_TIMER) {
+          setGameStatus("over");
+          clearInterval(countdownInterval);
+        }
+        return prev - 1;
       });
     }, 1000);
 
     setPlanePosition(getRandomPosition());
   };
 
+  const handleGoBack = () => navigate("/games");
+
   return (
     <>
       {gameStatus === "uninitiated" && (
-        <main className="w-screen h-screen overflow-x-hidden overflow-y-auto px-[25vw] py-5">
+        <main className="w-screen h-screen overflow-x-hidden overflow-y-auto px-[20vw] flex items-center justify-center">
           <div className="flex flex-col gap-3 p-4 items-center outline outline-2 outline-black rounded-2xl bg-sky-200/50 backdrop-blur-sm	">
             <img
               src={goldenPlaneImage}
@@ -169,22 +224,19 @@ function WhackAPlane() {
                 <li className="flex flex-row items-start gap-2">
                   <div>-</div>
                   <div>
-                    The game lasts for 75 seconds and the player needs to hit
-                    the planes on screen.
+                    Hit planes as they randomly appear on a grid. Each hit earns
+                    points, but hitting a golden plane grants extra.
                   </div>
                 </li>
                 <li className="flex flex-row items-start gap-2">
                   <div>-</div>
-                  <div>
-                    Hitting golden planes gives out 20 points while that of
-                    black planes gives out 10 points.
-                  </div>
+                  <div>Beware the bomb plane, ending the game.</div>
                 </li>
                 <li className="flex flex-row items-start gap-2">
                   <div>-</div>
                   <div>
-                    There are also bombs which should be avoided, hitting a bomb
-                    ends the game immediately.
+                    Test your reflexes in this aerial twist on the classic
+                    Whack-A-Plane arcade game!
                   </div>
                 </li>
               </ul>
@@ -198,8 +250,22 @@ function WhackAPlane() {
         </main>
       )}
       {gameStatus === "initiated" && (
-        <main className="flex flex-col gap-10 items-center w-screen h-screen py-5">
-          <p>Score: {score}</p>
+        <main className="flex flex-col gap-5 items-center w-screen h-screen py-5">
+          <div className="grid grid-cols-3 w-screen px-[3vw] pt-1">
+            <button
+              onClick={handleGoBack}
+              className="underline flex justify-start items-start"
+            >
+              {"<-"}back
+            </button>
+            <p className="item-end flex justify-center items-start">
+              Timer: {countDown}
+            </p>
+            <div className="flex flex-col gap-1 justify-end items-end">
+              <p>HighScore: {highScore}</p>
+              <p>Score: {score}</p>
+            </div>
+          </div>
           <canvas
             ref={canvasRef}
             id="canvasElem"
@@ -218,13 +284,13 @@ function WhackAPlane() {
               text="Play Again!"
               theme="green"
               className="w-3/5"
-              callback={() => handleStart()}
+              callback={handleStart}
             />
             <Button
               text="Exit"
               theme="red"
               className="w-3/5"
-              callback={() => navigate("/games")}
+              callback={handleGoBack}
             />
           </div>
         </main>

@@ -27,70 +27,54 @@ function SignIn({ callback, success }) {
     e.preventDefault();
 
     if (username === "") {
-      toast.error("Please enter username", {
-        position: "bottom-left",
-      });
+      toast.error("Please enter username");
       return;
     }
     if (password === "") {
-      toast.error("Please enter password", {
-        position: "bottom-left",
-      });
+      toast.error("Please enter password");
       return;
     }
     if (username.length > 20) {
-      toast.error("Username should be less than 20 characters", {
-        position: "bottom-left",
-      });
+      toast.error("Username should be less than 20 characters");
       return;
     }
     const usernamePattern = /^[a-zA-Z0-9]*$/;
     if (!usernamePattern.test(username)) {
-      toast.error("username cannot contain special characters", {
-        position: "bottom-left",
-      });
+      toast.error("username cannot contain special characters");
       return;
     }
 
     if (password.length < 8 || password.length > 16) {
-      toast.error("Password should be between 8 and 16 characters", {
-        position: "bottom-left",
-      });
+      toast.error("Password should be between 8 and 16 characters");
       return;
     }
 
-    toast.promise(
-      signin(),
-      {
-        loading: "Loading...",
-        success: (response) => {
-          if (response.data && response.data.token) {
-            cookies.set("token", response.data.token, {
-              path: "/",
-              expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
-            });
-            const user = jwtDecode(response.data.token);
-            setUser(user.userId);
-            setToken(response.data.token);
-          }
-          success();
-          return "Login success!";
-        },
-        error: (error) => {
-          if (error.response && error.response.data) {
-            if (error.response.data.message === "invaliduser") {
-              return "Invalid username!";
-            } else if (error.response.data.message === "invalidpassword") {
-              return "Invalid password!";
-            }
-          }
-          return "Login failed!";
-        },
+    toast.promise(signin(), {
+      loading: "Loading...",
+      success: (response) => {
+        if (response.data && response.data.token) {
+          cookies.set("token", response.data.token, {
+            path: "/",
+            expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
+          });
+          const user = jwtDecode(response.data.token);
+          setUser(user.userId);
+          setToken(response.data.token);
+        }
+        success();
+        return "Login success!";
       },
-      {
-        position: "bottom-left",
-      }
-    );
+      error: (error) => {
+        if (error.response && error.response.data) {
+          if (error.response.data.message === "invaliduser") {
+            return "Invalid username!";
+          } else if (error.response.data.message === "invalidpassword") {
+            return "Invalid password!";
+          }
+        }
+        return "Login failed!";
+      },
+    });
   };
   return (
     <div className="fixed left-[15vw] top-[10vh] h-[80vh] z-[1200] rounded-xl flex flex-col items-center justify-center bg-white w-[70vw]">

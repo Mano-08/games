@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import Home from "./pages/Home";
@@ -43,8 +43,20 @@ export function UserInfoProvider({ children }) {
       }
     }
   }, []);
+
+  const logout = () => {
+    const cookies = new Cookies();
+    if (cookies.get("token")) {
+      cookies.remove("token");
+      setToken(null);
+      setUser(null);
+    }
+  };
+
   return (
-    <UserInfoContext.Provider value={{ user, setUser, token, setToken }}>
+    <UserInfoContext.Provider
+      value={{ user, setUser, token, setToken, logout }}
+    >
       {children}
     </UserInfoContext.Provider>
   );

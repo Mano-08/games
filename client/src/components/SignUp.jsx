@@ -17,20 +17,14 @@ function SignUp({ callback, success }) {
     switch (name) {
       case "username":
         value.length > 20
-          ? toast.error("Username should be less than 20 characters", {
-              position: "bottom-left",
-            })
+          ? toast.error("Username should be less than 20 characters")
           : usernamePattern.test(value)
           ? setUsername(value)
-          : toast.error("username cannot contain special characters", {
-              position: "bottom-left",
-            });
+          : toast.error("username cannot contain special characters");
         break;
       case "password":
         value.length > 16
-          ? toast.error("Password should be less than 16 characters", {
-              position: "bottom-left",
-            })
+          ? toast.error("Password should be less than 16 characters")
           : setPassword(value);
         break;
       default:
@@ -49,64 +43,50 @@ function SignUp({ callback, success }) {
   const handleRegister = async (event) => {
     event.preventDefault();
     if (username === "") {
-      toast.error("Please enter username", {
-        position: "bottom-left",
-      });
+      toast.error("Please enter username");
       return;
     }
     if (password === "") {
-      toast.error("Please enter password", {
-        position: "bottom-left",
-      });
+      toast.error("Please enter password");
       return;
     }
     const usernamePattern = /^[a-zA-Z0-9]*$/;
     if (!usernamePattern.test(username)) {
-      toast.error("username cannot contain special characters", {
-        position: "bottom-left",
-      });
+      toast.error("username cannot contain special characters");
       return;
     }
     if (password.length < 8) {
-      toast.error("Password should be at least 8 characters long", {
-        position: "bottom-left",
-      });
+      toast.error("Password should be at least 8 characters long");
       return;
     }
 
-    toast.promise(
-      signup(),
-      {
-        loading: "Registering...",
-        success: (response) => {
-          success();
-          if (response.data && response.data.token) {
-            cookies.set("token", response.data.token, {
-              expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
-              path: "/",
-            });
-            const user = jwtDecode(response.data.token);
-            setUser(user.userId);
-            setToken(response.data.token);
-          }
-          return "Registration successful!";
-        },
-        error: (error) => {
-          console.log(error);
-          if (
-            error.response &&
-            error.response.data &&
-            error.response.data.message === "userexists"
-          ) {
-            return "Username already exists!";
-          }
-          return "Registration failed!";
-        },
+    toast.promise(signup(), {
+      loading: "Registering...",
+      success: (response) => {
+        success();
+        if (response.data && response.data.token) {
+          cookies.set("token", response.data.token, {
+            expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
+            path: "/",
+          });
+          const user = jwtDecode(response.data.token);
+          setUser(user.userId);
+          setToken(response.data.token);
+        }
+        return "Registration successful!";
       },
-      {
-        position: "bottom-left",
-      }
-    );
+      error: (error) => {
+        console.log(error);
+        if (
+          error.response &&
+          error.response.data &&
+          error.response.data.message === "userexists"
+        ) {
+          return "Username already exists!";
+        }
+        return "Registration failed!";
+      },
+    });
   };
 
   return (
