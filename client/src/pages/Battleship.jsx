@@ -1,45 +1,75 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import io from "socket.io-client";
 import SignUp from "../components/SignUp";
 import SignIn from "../components/SignIn";
-import navyShip from "../assets/images/battleship/navyship.png";
 import { toast } from "react-hot-toast";
-import Button from "../components/Button";
+import axios from "axios";
+import useWindowSize from "react-use/lib/useWindowSize";
+import Confetti from "react-confetti";
 import { initialBoardConfig, allShips } from "../utils/initialBoardConfig";
 import { UserInfoContext } from "../App";
+import OpponentsBoard from "../components/battleship/OpponentBoard";
+import MyBoard from "../components/battleship/MyBoard";
+import SelectShip from "../components/battleship/SelectShip";
+import LandingPage from "../components/battleship/LandingPage";
+import CreateRoomDialogBox from "../components/battleship/dialogbox/CreateRoomDialogBox";
+import JoinRoomDialogBox from "../components/battleship/dialogbox/JoinRoomDialogBox";
+import GameCompletedDialogBox from "../components/battleship/dialogbox/GameCompletedDialogBox";
+import OpponentLeftDialogBox from "../components/battleship/dialogbox/OpponentLeftDialogBox";
 
 const socket = io.connect("http://127.0.0.1:5000", {
   transports: ["websocket"],
 });
 
 function Battleship() {
-  const { user } = React.useContext(UserInfoContext);
-  const [selectedShip, setSelectedShip] = React.useState(null);
-  const [vertical, setVertical] = React.useState(false);
-  const [winner, setWinner] = React.useState(null);
-  const [whoseTurn, setWhoseTurn] = React.useState(null);
-  const [shipsWrecked, setShipsWrecked] = React.useState(0);
-  const [torpedoAttack, setTorpedoAttack] = React.useState(null);
-  const [myShipPlacements, setMyShipPlacement] = React.useState({});
-  const [isOpponentReady, setIsOpponentReady] = React.useState(false);
-  const [isPlayerReady, setIsPlayerReady] = React.useState(false);
-  const [allShipsPlaced, setAllShipsPlaced] = React.useState(false);
-  const [room, setRoom] = React.useState("");
-  const [startGame, setStartGame] = React.useState(false);
-  const [myShips, setMyShips] = React.useState(allShips);
-  const [opponentsBoard, setOpponentsBoard] =
-    React.useState(initialBoardConfig);
-  const [myBoard, setMyboard] = React.useState(initialBoardConfig);
-  const [display, setDisplay] = React.useState({
+  const { user, token, logout } = useContext(UserInfoContext);
+  const [consecutiveHit, setConsecutiveHit] = useState(false);
+  const [consecutiveDamage, setConsecutiveDamage] = useState(false);
+  const [score, setScore] = useState(1000);
+  const [opponentLeft, setOpponentLeft] = useState(false);
+  const [highScore, setHighScore] = useState(0);
+  const [selectedShip, setSelectedShip] = useState(null);
+  const [vertical, setVertical] = useState(false);
+  const [winner, setWinner] = useState(null);
+  const [whoseTurn, setWhoseTurn] = useState(null);
+  const [shipsWrecked, setShipsWrecked] = useState(0);
+  const [torpedoAttack, setTorpedoAttack] = useState(null);
+  const [myShipPlacements, setMyShipPlacement] = useState({});
+  const [isOpponentReady, setIsOpponentReady] = useState(false);
+  const [isPlayerReady, setIsPlayerReady] = useState(false);
+  const [allShipsPlaced, setAllShipsPlaced] = useState(false);
+  const [room, setRoom] = useState("");
+  const [startGame, setStartGame] = useState(false);
+  const [myShips, setMyShips] = useState(allShips);
+  const [opponentsBoard, setOpponentsBoard] = useState(initialBoardConfig);
+  const [myBoard, setMyboard] = useState(initialBoardConfig);
+  const [display, setDisplay] = useState({
     display: false,
     regarding: "",
     data: null,
   });
-  const [gameStatus, setGameStatus] = React.useState("uninitiated");
+  const [gameStatus, setGameStatus] = useState("uninitiated");
+  const { width, height } = useWindowSize();
 
-  React.useEffect(() => {
-    socket.on("connect", () => {
-      console.log("connected");
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (gameStatus === "uninitiated") return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
+
+  useEffect(() => {
+    socket.on("connect", () => {});
+
+    socket.on("playerLeft", ({ username }) => {
+      toast(`${username} left the room.`);
+      setOpponentLeft(true);
     });
 
     socket.on("full", (room) => {
@@ -58,11 +88,18 @@ function Battleship() {
       }
     });
 
+    socket.on("invalidtoken", () => {
+      logout();
+      toast.error("Invalid token! Please login again");
+    });
+
     socket.on("ready", (data) => {
       if (data.playerId !== socket.id) {
         setOpponentsBoard(data.boardConfig);
         setIsOpponentReady(true);
         toast.success("Opponent is Ready!");
+      } else {
+        toast.success("Message sent!");
       }
     });
 
@@ -70,54 +107,15 @@ function Battleship() {
       setTorpedoAttack(data);
     });
 
-    socket.on("restartGameRequest", (data) => {
-      if (data.playerId !== socket.id) {
-        toast.custom(
-          (t) => (
-            <div
-              className={`${
-                t.visible ? "animate-enter" : "animate-leave"
-              } max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex flex-col ring-1 ring-black ring-opacity-5`}
-            >
-              <div>
-                <p>Your friend wants to play again! What would you say?</p>
-                <div className="flex flex-row items-center justify-between">
-                  <button
-                    onClick={() => {
-                      socket.emit("responseRestart", {
-                        room,
-                        playerId: socket.id,
-                        res: "yes",
-                      });
-                    }}
-                  >
-                    Yes!
-                  </button>
-                  <button
-                    onClick={() => {
-                      socket.emit("responseRestart", {
-                        room,
-                        playerId: socket.id,
-                        res: "no",
-                      });
-                      toast.dismiss(t.id);
-                    }}
-                  >
-                    Nope!
-                  </button>
-                </div>
-              </div>
-            </div>
-          ),
-          {
-            position: "bottom-right",
-          }
-        );
+    socket.on("oneShipDown", ({ playerId, shipId }) => {
+      if (playerId !== socket.id) {
+        toast(`enemy's ${shipId} is wrecked!`);
       }
     });
 
     socket.on("playerJoined", (data) => {
       setGameStatus("initiated");
+      setHighScore(data.score);
       if (data.timeline === "first" && data.playerId === socket.id) {
         setWhoseTurn("player");
         setDisplay({ display: true, regarding: "createRoom", data: data.room });
@@ -148,31 +146,55 @@ function Battleship() {
     }
   }, [torpedoAttack]);
 
-  function handleTorpedoAttact(data) {
+  useEffect(() => {
+    if (opponentLeft) {
+      setDisplay({ display: true, regarding: "opponentLeft", data: null });
+    }
+  }, [opponentLeft]);
+
+  useEffect(() => {
+    if (gameStatus === "initiated") {
+      if (score > highScore) {
+        if (score > highScore) {
+          setHighScore(score);
+        }
+        const url = `http://127.0.0.1:5000/api/battleship/updatescore`;
+        axios.post(url, { score, token }).then((response) => {
+          if (response.data && response.data.message === "success") {
+            toast.success("Score updated successfully");
+          }
+        });
+      }
+    }
+  }, [winner]);
+
+  const handleTorpedoAttact = (data) => {
     if (data.playerId !== socket.id) {
       setWhoseTurn("player");
       if (myBoard[data.rindex][data.cindex].ship === true) {
+        if (consecutiveDamage) {
+          setScore((oldScore) => oldScore - 20);
+        } else {
+          setScore((oldScore) => oldScore - 10);
+        }
+        setConsecutiveDamage(true);
         const { id } = myBoard[data.rindex][data.cindex].details;
-        console.log(myShipPlacements, "myship placement");
-        console.log(id);
+
         const {
           length,
           vertical,
           startIndex: { rowStart, colStart },
         } = myShipPlacements[id];
+
+        let wrecked = true;
         if (vertical) {
-          let wrecked = true;
           for (let row = rowStart; row < rowStart + length; row++) {
             if (myBoard[row][colStart].details.burst === false) {
               wrecked = false;
               break;
             }
           }
-          if (wrecked) {
-            setShipsWrecked((oldCount) => oldCount + 1);
-          }
         } else {
-          let wrecked = true;
           for (let col = colStart; col < colStart + length; col++) {
             if (
               myBoard[rowStart][col].details.burst === false &&
@@ -182,10 +204,18 @@ function Battleship() {
               break;
             }
           }
-          if (wrecked) {
-            setShipsWrecked((oldCount) => oldCount + 1);
-          }
         }
+        if (wrecked) {
+          setShipsWrecked((oldCount) => oldCount + 1);
+          toast(`your ${id} is wrecked!`);
+          socket.emit("oneShipDown", {
+            room,
+            playerId: socket.id,
+            shipId: id,
+          });
+        }
+      } else {
+        setConsecutiveDamage(true);
       }
 
       setMyboard((oldData) => {
@@ -196,19 +226,20 @@ function Battleship() {
         return newData;
       });
     }
-  }
+  };
 
   useEffect(() => {
-    if (shipsWrecked === 5) {
-      setWinner("opponent");
-      toast("You Lost! Better luck next time!");
-      setDisplay({
-        display: true,
-        regarding: "gameCompleted",
-        data: "youLost",
-      });
-
-      socket.emit("youWon", { room, playerId: socket.id });
+    if (gameStatus === "initiated") {
+      if (shipsWrecked === 5) {
+        setWinner("opponent");
+        toast("You Lost! Better luck next time!");
+        setDisplay({
+          display: true,
+          regarding: "gameCompleted",
+          data: "youLost",
+        });
+        socket.emit("youWon", { room, playerId: socket.id });
+      }
     }
   }, [shipsWrecked]);
 
@@ -228,12 +259,12 @@ function Battleship() {
     } else {
       const currentTime = new Date().toISOString();
       const roomName = socket.id + currentTime;
-      socket.emit("join", { room: roomName, playerId: socket.id });
+      socket.emit("join", { room: roomName, playerId: socket.id, token });
     }
   };
 
   const handleJoinGivenRoom = () => {
-    socket.emit("join", { room, playerId: socket.id });
+    socket.emit("join", { room, playerId: socket.id, token });
     removeDialogbox();
   };
 
@@ -362,10 +393,6 @@ function Battleship() {
     }
   };
 
-  useEffect(() => {
-    console.log(myShipPlacements);
-  }, [myShipPlacements]);
-
   const handlePlaceShip = ({ rindex, cindex, ship }) => {
     if (ship.validHover) {
       setMyShipPlacement((oldData) => {
@@ -420,7 +447,11 @@ function Battleship() {
   }, [myShips]);
 
   const handleExitGame = () => {
-    console.log("exit");
+    socket.emit("leaveRoom", {
+      room,
+      username: user,
+    });
+    resetGame();
   };
 
   useEffect(() => {
@@ -430,20 +461,15 @@ function Battleship() {
     }
   }, [isPlayerReady, isOpponentReady]);
 
-  const handleRestartGame = () => {
-    console.log("restart");
-  };
-
-  const handleResetBoard = () => {
-    setSelectedShip(null);
-    removeDialogbox();
-    setAllShipsPlaced(false);
-    setMyShips(allShips);
+  const resetGame = () => {
+    handleResetBoard();
+    setRoom("");
+    setGameStatus("uninitiated");
     setWinner(null);
-    setAllShipsPlaced(false);
+    setOpponentLeft(false);
+    setConsecutiveHit(false);
     setIsOpponentReady(false);
     setIsPlayerReady(false);
-    setMyShipPlacement({});
     setOpponentsBoard((oldData) => {
       for (let row = 0; row < 10; row++) {
         for (let col = 0; col < 10; col++) {
@@ -460,6 +486,16 @@ function Battleship() {
       }
       return oldData;
     });
+  };
+
+  const handleResetBoard = () => {
+    setSelectedShip(null);
+    removeDialogbox();
+    setAllShipsPlaced(false);
+    setScore(1000);
+    setMyShips(allShips);
+    setAllShipsPlaced(false);
+    setMyShipPlacement({});
     setMyboard((oldData) => {
       for (let row = 0; row < 10; row++) {
         for (let col = 0; col < 10; col++) {
@@ -485,15 +521,25 @@ function Battleship() {
 
   const dropTorpedoes = ({ rindex, cindex }) => {
     if (!startGame) {
-      toast.error("Your opponent is not Ready yet!");
+      toast.error("Both players need to be ready to start the game!");
       return;
     }
-    console.log(whoseTurn);
     if (whoseTurn !== "player") {
       toast.error("Its your opponent's turn!");
       return;
     }
     setWhoseTurn("opponent");
+    if (opponentsBoard[rindex][cindex].ship === true) {
+      if (consecutiveHit) {
+        setScore((oldScore) => oldScore + 20);
+      } else {
+        setScore((oldScore) => oldScore + 10);
+      }
+      setConsecutiveHit(true);
+    } else {
+      setScore((oldScore) => oldScore - 10);
+      setConsecutiveHit(false);
+    }
     setOpponentsBoard((oldData) => {
       if (oldData[rindex][cindex].details.burst === false) {
         const newData = [...oldData];
@@ -516,44 +562,71 @@ function Battleship() {
   };
   return (
     <>
-      {display.display && display.regarding === "createRoom" && (
-        <>
-          <div className="bg-black/60 h-screen w-screen fixed top-0 left-0 z-[1000]" />
-          <div className="h-[30vh] top-[35vh] left-[20vw] w-[60vw] fixed z-[1005] bg-white">
-            Share this room to your friend
-            <Button
-              callback={() => CopyToClipBoard()}
-              theme="green"
-              text={display.data}
+      {/* ************************* GAME UNINITIATED -- Player has not joined the room ***************************** */}
+
+      {gameStatus === "uninitiated" && (
+        <LandingPage
+          handleCreateRoom={handleCreateRoom}
+          handleJoinRoom={handleJoinRoom}
+        />
+      )}
+
+      {/* ************************* GAME INITIATED -- Player has joined the room ***************************** */}
+
+      {gameStatus === "initiated" && (
+        <main className="w-screen h-screen flex flex-col gap-4 overflow-hidden px-[10vw] py-5">
+          <div className="flex flex-row items-start justify-between text-black">
+            <button onClick={handleExitGame} className="underline">
+              {"<-"}exit
+            </button>
+            <div className="flex flex-row items-start gap-7">
+              <p>Score: {score}</p> -
+              <p className="text-slate-800">HighScore: {highScore}</p>
+            </div>
+          </div>
+          <div className="grid custom-grid-battleship py-8">
+            <SelectShip
+              vertical={vertical}
+              myShips={myShips}
+              isPlayerReady={isPlayerReady}
+              handleSelectShip={handleSelectShip}
+              handleResetBoard={handleResetBoard}
+              handleSendReadyMessage={handleSendReadyMessage}
+              allShipsPlaced={allShipsPlaced}
             />
-            <Button
-              callback={() => removeDialogbox()}
-              theme="red"
-              text="Close"
+            <MyBoard
+              myBoard={myBoard}
+              handleMouseEnterCell={handleMouseEnterCell}
+              handlePlaceShip={handlePlaceShip}
+            />
+            <OpponentsBoard
+              opponentsBoard={opponentsBoard}
+              dropTorpedoes={dropTorpedoes}
             />
           </div>
-        </>
+        </main>
+      )}
+
+      {/* *********************************************** DIALOG BOXES ************************************************* */}
+
+      {display.display && display.regarding === "createRoom" && (
+        <CreateRoomDialogBox
+          removeDialogbox={removeDialogbox}
+          CopyToClipBoard={CopyToClipBoard}
+          display={display}
+        />
+      )}
+
+      {display.display && display.regarding === "opponentLeft" && (
+        <OpponentLeftDialogBox handleExitGame={handleExitGame} />
       )}
       {display.display && display.regarding === "joinRoom" && (
-        <>
-          <div
-            onClick={removeDialogbox}
-            className="bg-black/60 h-screen w-screen fixed top-0 left-0 z-[1000]"
-          />
-          <div className="h-[30vh] top-[35vh] left-[20vw] w-[60vw] fixed z-[1005] bg-white">
-            Enter room code to join{" "}
-            <input
-              value={room}
-              onChange={(e) => setRoom(e.target.value)}
-              placeholder="12193-14-ef243"
-            />
-            <Button
-              callback={() => handleJoinGivenRoom()}
-              theme="green"
-              text="Join"
-            />
-          </div>
-        </>
+        <JoinRoomDialogBox
+          removeDialogbox={removeDialogbox}
+          room={room}
+          setRoom={setRoom}
+          handleJoinGivenRoom={handleJoinGivenRoom}
+        />
       )}
       {display.display &&
         (display.regarding === "signin" || display.regarding === "signup") && (
@@ -579,183 +652,13 @@ function Battleship() {
             )}
           </>
         )}
-      {display.display && display.regarding === "gameCompleted" && (
-        <>
-          <div className="bg-black/60 h-screen w-screen fixed top-0 left-0 z-[1000]" />
-          <div className="h-[30vh] top-[35vh] left-[20vw] w-[60vw] fixed z-[1005] bg-white">
-            <div className="flex flex-col">
-              {winner === "player" ? (
-                <p>Congratulations! you won</p>
-              ) : (
-                <p>Oops! you lost</p>
-              )}
-              <div className="p-5 flex-row flex justify-between">
-                <Button
-                  theme="green"
-                  text="Restart"
-                  callback={() => handleRestartGame()}
-                />
-                <Button
-                  theme="red"
-                  text="Exit"
-                  callback={() => handleExitGame()}
-                />
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-      {gameStatus === "uninitiated" && (
-        <main className="w-screen h-screen overflow-hidden px-[25vw] py-5">
-          <div className="flex flex-col gap-3 p-4 items-center outline outline-2 outline-black rounded-2xl bg-sky-200/50 backdrop-blur-sm	">
-            <img
-              src={navyShip}
-              alt="main"
-              className="w-[15vw] h-auto rounded-2xl"
-            />
-            <div>
-              <h1 className="font-bold underline py-4">Rules:</h1>
-              <ul className="text-gray-600 flex flex-col gap-1">
-                <li className="flex flex-row items-start gap-2">
-                  <div>-</div>
-                  <div>
-                    The game lasts for 75 seconds and the player needs to hit
-                    the planes on screen.
-                  </div>
-                </li>
-                <li className="flex flex-row items-start gap-2">
-                  <div>-</div>
-                  <div>
-                    Hitting golden planes gives out 20 points while that of
-                    black planes gives out 10 points.
-                  </div>
-                </li>
-                <li className="flex flex-row items-start gap-2">
-                  <div>-</div>
-                  <div>
-                    There are also bombs which should be avoided, hitting a bomb
-                    ends the game immediately.
-                  </div>
-                </li>
-              </ul>
-            </div>
-            <div className="flex flex-row items-center gap-5 my-4">
-              <Button
-                callback={() => handleJoinRoom()}
-                theme="green"
-                text="Join room"
-              />
-              <Button
-                callback={() => handleCreateRoom()}
-                theme="green"
-                text="Create room"
-              />
-            </div>
-          </div>
-        </main>
-      )}
 
-      {gameStatus === "initiated" && (
-        <main className="w-screen h-screen flex flex-col gap-4 overflow-hidden px-[10vw] py-5">
-          <div className="flex flex-row items-start justify-between text-black">
-            <button className="underline">{"<-"}back</button>
-            <button>i</button>
-          </div>
-          <div className="grid custom-grid-battleship py-8">
-            <div className="flex flex-col gap-3 py-2">
-              <h1 className="font-bold">
-                Select Ship{" "}
-                {vertical ? <span>&#8595;</span> : <span>&#8594;</span>}
-              </h1>
-              <div className="flex flex-col gap-2">
-                {myShips.map((ship) => (
-                  <button
-                    key={ship.id}
-                    className="text-left rounded-md hover:outline outline-black outline-2 px-2 py-1"
-                    onClick={() => !ship.placed && handleSelectShip(ship)}
-                    style={
-                      ship.selected
-                        ? { background: "white" }
-                        : ship.placed
-                        ? { background: "gray" }
-                        : {}
-                    }
-                  >
-                    {ship.id}-{ship.length}
-                  </button>
-                ))}
-              </div>
-              <Button
-                theme="reset"
-                text="Reset"
-                className="mt-10"
-                callback={() => handleResetBoard()}
-              />
-              <Button
-                theme="green"
-                text="Ready!"
-                disabled={!allShipsPlaced}
-                style={{
-                  cursor: allShipsPlaced ? "pointer" : "not-allowed",
-                }}
-                callback={() => handleSendReadyMessage()}
-              />
-            </div>
-            <div className="grid grid-rows-10">
-              {myBoard.map((row, rindex) => (
-                <div key={rindex} className="grid grid-cols-10">
-                  {row.map((ele, cindex) => (
-                    <div key={`${rindex}-${cindex}`}>
-                      <div
-                        style={
-                          ele.validHover === null
-                            ? ele.ship
-                              ? ele.details.burst
-                                ? { background: "red" }
-                                : { background: "rgb(23 37 84)" }
-                              : ele.details.burst
-                              ? { background: "gray" }
-                              : { background: "rgb(14, 165, 233)" }
-                            : ele.validHover === true
-                            ? { background: "rgb(29 78 216)" }
-                            : ele.validHover === false
-                            ? { background: "rgb(248 113 113)" }
-                            : {}
-                        }
-                        className="pt-[100%] w-full outline outline-black outline-[1px] cursor-pointer transition-all duration-100 ease-in-out"
-                        onMouseEnter={() =>
-                          handleMouseEnterCell({ rindex, cindex })
-                        }
-                        onClick={() =>
-                          handlePlaceShip({ ship: ele, cindex, rindex })
-                        }
-                      ></div>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-            <div className="grid grid-rows-10">
-              {opponentsBoard.map((row, rindex) => (
-                <div key={`${rindex}-opponent`} className="grid grid-cols-10">
-                  {row.map((ele, cindex) => (
-                    <div key={`${rindex}-${cindex}-opponent`}>
-                      <div
-                        style={
-                          ele.details.burst
-                            ? { background: "gray" }
-                            : { background: "rgb(190 24 93)" }
-                        }
-                        className={`pt-[100%] w-full outline hover:bg-slate-600 outline-black outline-[1px] cursor-pointer transition-all duration-100 ease-in-out`}
-                        onClick={() => dropTorpedoes({ rindex, cindex })}
-                      ></div>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-        </main>
+      {winner === "player" && <Confetti width={width} height={height} />}
+      {display.display && display.regarding === "gameCompleted" && (
+        <GameCompletedDialogBox
+          handleExitGame={handleExitGame}
+          winner={winner}
+        />
       )}
     </>
   );

@@ -4,5 +4,8 @@ const controller = require("../controller/controller");
 
 router.post("/signup", controller.signup);
 router.post("/signin", controller.signin);
+router.post("/battleship/updatescore", controller.updatescore_battleship);
+router.post("/whackaplane/gethighscore", controller.getscore_whackaplane);
+router.post("/whackaplane/updatehighscore", controller.updatescore_whackaplane);
 
 module.exports = router;

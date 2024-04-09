@@ -67,6 +67,23 @@ body {
   background: #56caff;
 }
 
+/***********************  GAMES PAGE ANIMATION  **************************/
+
+@keyframes drop {
+  from {
+    opacity: 0;
+    transform: translateY(-1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.custom-drop-animation {
+  animation: drop 400ms ease-in-out;
+}
+
 /***********************  SCROLL BAR ALTERATION  **************************/
 
 /* width */

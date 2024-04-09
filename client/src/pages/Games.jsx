@@ -1,21 +1,38 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import whack_a_plane from "../assets/images/whack-a-plane/whackAPlane.gif";
 import battle_ship from "../assets/images/battleship/battleship.gif";
 import { UserInfoContext } from "../App";
+import Cookies from "universal-cookie";
 import GameCard from "../components/GameCard";
 import SignUp from "../components/SignUp";
 import SignIn from "../components/SignIn";
 
 function Games() {
   const [dialogBox, setDialogBox] = React.useState("");
+  const [displayLogout, setDisplayLogout] = React.useState(false);
   const removeDialogBox = () => setDialogBox("");
-  const { user } = useContext(UserInfoContext);
+  const { user, logout } = useContext(UserInfoContext);
 
   return (
     <div className="px-28">
       <div className="flex flex-row justify-end gap-8 py-7">
         {user ? (
-          <p className="">Welcome, {user}</p>
+          <div className="relative flex flex-row gap-3 items-start">
+            <p
+              onClick={() => setDisplayLogout((oldvalue) => !oldvalue)}
+              className="cursor-pointer"
+            >
+              Welcome, {user}
+            </p>
+            {displayLogout && (
+              <button
+                onClick={logout}
+                className="absolute custom-drop-animation top-9 right-0 py-5 px-10 rounded-md bg-neutral-300 cursor-pointer shadow-md"
+              >
+                logout
+              </button>
+            )}
+          </div>
         ) : (
           <>
             <button
