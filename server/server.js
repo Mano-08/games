@@ -63,6 +63,9 @@ io.on("connection", (socket) => {
       : 0;
     if (clientsInRoom === 1) io.to(room).emit("playerLeft", { username });
   });
+  socket.on("sendMessage", ({ room, playerId, message }) => {
+    io.to(room).emit("receiveMessage", { playerId, message });
+  });
   socket.on("youWon", (data) => {
     io.to(data.room).emit("youWon", data);
   });

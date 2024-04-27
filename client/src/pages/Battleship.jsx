@@ -1,8 +1,11 @@
 import React, { useEffect, useState, useContext } from "react";
 import io from "socket.io-client";
 import SignUp from "../components/SignUp";
+import captain from "../assets/images/battleship/captain.png";
 import SignIn from "../components/SignIn";
 import { toast } from "react-hot-toast";
+import MessageBox from "../components/battleship/MessageBox";
+import messageIcon from "../assets/images/battleship/message.jpg";
 import axios from "axios";
 import useWindowSize from "react-use/lib/useWindowSize";
 import Confetti from "react-confetti";
@@ -16,6 +19,7 @@ import CreateRoomDialogBox from "../components/battleship/dialogbox/CreateRoomDi
 import JoinRoomDialogBox from "../components/battleship/dialogbox/JoinRoomDialogBox";
 import GameCompletedDialogBox from "../components/battleship/dialogbox/GameCompletedDialogBox";
 import OpponentLeftDialogBox from "../components/battleship/dialogbox/OpponentLeftDialogBox";
+import Button from "../components/Button";
 
 const socket = io.connect("http://127.0.0.1:5000", {
   transports: ["websocket"],
@@ -66,7 +70,26 @@ function Battleship() {
 
   useEffect(() => {
     socket.on("connect", () => {});
-
+    socket.on("receiveMessage", ({ playerId, message }) => {
+      if (playerId !== socket.id) {
+        toast.custom((t) => (
+          <div className="flex flex-col items-center gap-3 p-3 bg-white rounded-2xl outline-2 outline-black outline">
+            <p>Message received!</p>
+            <div className="flex flex-row items-center gap-3">
+              <img src={captain} alt="captain" className="h-32 w-32" />
+              <p>{message}</p>
+            </div>
+            <div>
+              <Button
+                theme="red"
+                text="close"
+                callback={() => toast.dismiss(t.id)}
+              />
+            </div>
+          </div>
+        ));
+      }
+    });
     socket.on("playerLeft", ({ username }) => {
       toast(`${username} left the room.`);
       setOpponentLeft(true);
@@ -393,6 +416,14 @@ function Battleship() {
     }
   };
 
+  const sendMessage = (message) => {
+    socket.emit("sendMessage", {
+      room,
+      playerId: socket.id,
+      message: message,
+    });
+  };
+
   const handlePlaceShip = ({ rindex, cindex, ship }) => {
     if (ship.validHover) {
       setMyShipPlacement((oldData) => {
@@ -575,6 +606,30 @@ function Battleship() {
 
       {gameStatus === "initiated" && (
         <main className="w-screen h-screen flex flex-col gap-4 overflow-hidden px-[10vw] py-5">
+          {display.display && display.regarding === "sendMessage" && (
+            <>
+              <div
+                className="fixed top-0 left-0 h-screen w-screen bg-black/60 z-[1000]"
+                onClick={removeDialogbox}
+              />
+              <MessageBox sendMessage={sendMessage} />
+            </>
+          )}
+          <button
+            onClick={() =>
+              setDisplay({
+                display: true,
+                regarding: "sendMessage",
+                data: null,
+              })
+            }
+          >
+            <img
+              src={messageIcon}
+              alt="message icon"
+              className="h-12 w-12 rounded-sm absolute bottom-5 right-5"
+            ></img>
+          </button>
           <div className="flex flex-row items-start justify-between text-black">
             <button onClick={handleExitGame} className="underline">
               {"<-"}exit
