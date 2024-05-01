@@ -136,10 +136,32 @@ const updatescore_whackaplane = async (req, res) => {
   }
 };
 
+const getLeaderBoard = async (req, res) => {
+  try {
+    const { token } = req.body;
+    validateToken(token, async (err, response) => {
+      if (err) {
+        res.status(401).json({ message: "invalidToken" });
+      } else {
+        const updateScoreQuery = `SELECT username, score
+        FROM whackaplane
+        ORDER BY score DESC
+        LIMIT 10;`;
+
+        const leaderBoard = await pool.query(updateScoreQuery);
+        res.status(200).json({ leaderBoard: leaderBoard.rows });
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 module.exports = {
   signin,
   signup,
   updatescore_battleship,
   getscore_whackaplane,
   updatescore_whackaplane,
+  getLeaderBoard,
 };

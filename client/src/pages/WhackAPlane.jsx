@@ -6,6 +6,7 @@ import blastImage from "../assets/images/whack-a-plane/explode.jpg";
 import Button from "../components/Button";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import LeaderBoard from "../components/whackaplane/LeaderBoard";
 import { UserInfoContext } from "../App";
 
 function WhackAPlane() {
@@ -273,6 +274,7 @@ function WhackAPlane() {
             width={500}
             className="border border-black bg-white"
           />
+          <LeaderBoard />
         </main>
       )}
       {gameStatus === "over" && (
