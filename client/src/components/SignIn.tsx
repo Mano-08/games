@@ -4,13 +4,20 @@ import axios from "axios";
 import Cookies from "universal-cookie";
 import { toast } from "react-hot-toast";
 import { jwtDecode } from "jwt-decode";
+import { CustomJwtPayload } from "../types/types";
 
-function SignIn({ callback, success }) {
+function SignIn({
+  callback,
+  success,
+}: {
+  callback: () => void;
+  success: () => void;
+}) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const { setUser, setToken } = React.useContext(UserInfoContext);
   const cookies = new Cookies();
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.target.name === "username" && setUsername(e.target.value);
     e.target.name === "password" && setPassword(e.target.value);
   };
@@ -23,7 +30,7 @@ function SignIn({ callback, success }) {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
 
     if (username === "") {
@@ -57,7 +64,7 @@ function SignIn({ callback, success }) {
             path: "/",
             expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
           });
-          const user = jwtDecode(response.data.token);
+          const user = jwtDecode<CustomJwtPayload>(response.data.token);
           setUser(user.userId);
           setToken(response.data.token);
         }

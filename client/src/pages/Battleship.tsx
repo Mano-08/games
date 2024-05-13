@@ -1,8 +1,11 @@
 import React, { useEffect, useState, useContext } from "react";
-import io from "socket.io-client";
+import * as io from "socket.io-client";
 import SignUp from "../components/SignUp";
+import captain from "../assets/images/battleship/captain.png";
 import SignIn from "../components/SignIn";
 import { toast } from "react-hot-toast";
+import MessageBox from "../components/battleship/MessageBox";
+import messageIcon from "../assets/images/battleship/message.jpg";
 import axios from "axios";
 import useWindowSize from "react-use/lib/useWindowSize";
 import Confetti from "react-confetti";
@@ -16,6 +19,8 @@ import CreateRoomDialogBox from "../components/battleship/dialogbox/CreateRoomDi
 import JoinRoomDialogBox from "../components/battleship/dialogbox/JoinRoomDialogBox";
 import GameCompletedDialogBox from "../components/battleship/dialogbox/GameCompletedDialogBox";
 import OpponentLeftDialogBox from "../components/battleship/dialogbox/OpponentLeftDialogBox";
+import Button from "../components/Button";
+import { PropBoardCell, PropShip } from "../types/types";
 
 const socket = io.connect("http://127.0.0.1:5000", {
   transports: ["websocket"],
@@ -28,34 +33,46 @@ function Battleship() {
   const [score, setScore] = useState(1000);
   const [opponentLeft, setOpponentLeft] = useState(false);
   const [highScore, setHighScore] = useState(0);
-  const [selectedShip, setSelectedShip] = useState(null);
-  const [vertical, setVertical] = useState(false);
-  const [winner, setWinner] = useState(null);
-  const [whoseTurn, setWhoseTurn] = useState(null);
+  const [selectedShip, setSelectedShip] = useState<null | PropShip>(null);
+  const [vertical, setVertical] = useState<boolean>(false);
+  const [winner, setWinner] = useState<string | null>(null);
+  const [whoseTurn, setWhoseTurn] = useState<string | null>(null);
   const [shipsWrecked, setShipsWrecked] = useState(0);
   const [torpedoAttack, setTorpedoAttack] = useState(null);
-  const [myShipPlacements, setMyShipPlacement] = useState({});
-  const [isOpponentReady, setIsOpponentReady] = useState(false);
-  const [isPlayerReady, setIsPlayerReady] = useState(false);
-  const [allShipsPlaced, setAllShipsPlaced] = useState(false);
-  const [room, setRoom] = useState("");
-  const [startGame, setStartGame] = useState(false);
-  const [myShips, setMyShips] = useState(allShips);
-  const [opponentsBoard, setOpponentsBoard] = useState(initialBoardConfig);
-  const [myBoard, setMyboard] = useState(initialBoardConfig);
-  const [display, setDisplay] = useState({
+  const [myShipPlacements, setMyShipPlacement] = useState<{
+    [key: string]: {
+      length: number;
+      vertical: boolean;
+      startIndex: { rowStart: number; colStart: number };
+    };
+  }>({});
+  const [isOpponentReady, setIsOpponentReady] = useState<boolean>(false);
+  const [isPlayerReady, setIsPlayerReady] = useState<boolean>(false);
+  const [allShipsPlaced, setAllShipsPlaced] = useState<boolean>(false);
+  const [room, setRoom] = useState<null | string>("");
+  const [startGame, setStartGame] = useState<boolean>(false);
+  const [myShips, setMyShips] = useState<PropShip[]>(allShips);
+  const [opponentsBoard, setOpponentsBoard] =
+    useState<PropBoardCell[][]>(initialBoardConfig);
+  const [myBoard, setMyboard] = useState<PropBoardCell[][]>(initialBoardConfig);
+  const [display, setDisplay] = useState<{
+    display: boolean;
+    regarding: string;
+    data: string | null;
+  }>({
     display: false,
     regarding: "",
     data: null,
   });
-  const [gameStatus, setGameStatus] = useState("uninitiated");
+  const [gameStatus, setGameStatus] = useState<string>("uninitiated");
+
   const { width, height } = useWindowSize();
 
   useEffect(() => {
-    const handleBeforeUnload = (e) => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (gameStatus === "uninitiated") return;
       e.preventDefault();
-      e.returnValue = "";
+      // e.returnValue = "";
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
@@ -66,7 +83,29 @@ function Battleship() {
 
   useEffect(() => {
     socket.on("connect", () => {});
-
+    socket.on("receiveMessage", ({ playerId, message }) => {
+      if (playerId !== socket.id) {
+        toast.custom((t) => (
+          <div className="flex flex-col items-center gap-3 p-3 bg-white rounded-2xl outline-2 outline-black outline">
+            <p>Message received!</p>
+            <div className="flex flex-row items-center gap-3">
+              <img src={captain} alt="captain" className="h-32 w-32" />
+              <p>{message}</p>
+            </div>
+            <div>
+              <Button
+                className=""
+                style={{}}
+                disabled={false}
+                theme="red"
+                text="close"
+                callback={() => toast.dismiss(t.id)}
+              />
+            </div>
+          </div>
+        ));
+      }
+    });
     socket.on("playerLeft", ({ username }) => {
       toast(`${username} left the room.`);
       setOpponentLeft(true);
@@ -128,7 +167,7 @@ function Battleship() {
       }
     });
 
-    const handleRightClick = (e) => {
+    const handleRightClick = (e: MouseEvent) => {
       e.preventDefault();
       setVertical((oldData) => !oldData);
     };
@@ -168,7 +207,12 @@ function Battleship() {
     }
   }, [winner]);
 
-  const handleTorpedoAttact = (data) => {
+  const handleTorpedoAttact = (data: {
+    room: string;
+    rindex: number;
+    cindex: number;
+    playerId: string;
+  }) => {
     if (data.playerId !== socket.id) {
       setWhoseTurn("player");
       if (myBoard[data.rindex][data.cindex].ship === true) {
@@ -184,6 +228,10 @@ function Battleship() {
           length,
           vertical,
           startIndex: { rowStart, colStart },
+        }: {
+          length: number;
+          vertical: boolean;
+          startIndex: { rowStart: number; colStart: number };
         } = myShipPlacements[id];
 
         let wrecked = true;
@@ -274,11 +322,13 @@ function Battleship() {
 
   const CopyToClipBoard = () => {
     setRoom(display.data);
-    navigator.clipboard.writeText(display.data);
-    toast.success("Copied to clipboard");
+    if (display.data) {
+      navigator.clipboard.writeText(display.data);
+      toast.success("Copied to clipboard");
+    }
   };
 
-  const handleSelectShip = (selectedShip) => {
+  const handleSelectShip = (selectedShip: PropShip) => {
     setMyShips((oldData) =>
       oldData.map((ship) => {
         return {
@@ -291,7 +341,13 @@ function Battleship() {
     setSelectedShip(selectedShip);
   };
 
-  const handleMouseEnterCell = ({ rindex, cindex }) => {
+  const handleMouseEnterCell = ({
+    rindex,
+    cindex,
+  }: {
+    rindex: number;
+    cindex: number;
+  }) => {
     if (!selectedShip) return;
     const length = selectedShip.length;
     setMyboard((oldData) => {
@@ -393,8 +449,24 @@ function Battleship() {
     }
   };
 
-  const handlePlaceShip = ({ rindex, cindex, ship }) => {
-    if (ship.validHover) {
+  const sendMessage = (message: string) => {
+    socket.emit("sendMessage", {
+      room,
+      playerId: socket.id,
+      message: message,
+    });
+  };
+
+  const handlePlaceShip = ({
+    rindex,
+    cindex,
+    ship,
+  }: {
+    rindex: number;
+    cindex: number;
+    ship: any;
+  }) => {
+    if (ship.validHover && selectedShip !== null) {
       setMyShipPlacement((oldData) => {
         const newData = { ...oldData };
         const newElement = {
@@ -519,7 +591,13 @@ function Battleship() {
     socket.emit("ready", { room, boardConfig: myBoard, playerId: socket.id });
   };
 
-  const dropTorpedoes = ({ rindex, cindex }) => {
+  const dropTorpedoes = ({
+    rindex,
+    cindex,
+  }: {
+    rindex: number;
+    cindex: number;
+  }) => {
     if (!startGame) {
       toast.error("Both players need to be ready to start the game!");
       return;
@@ -575,6 +653,30 @@ function Battleship() {
 
       {gameStatus === "initiated" && (
         <main className="w-screen h-screen flex flex-col gap-4 overflow-hidden px-[10vw] py-5">
+          {display.display && display.regarding === "sendMessage" && (
+            <>
+              <div
+                className="fixed top-0 left-0 h-screen w-screen bg-black/60 z-[1000]"
+                onClick={removeDialogbox}
+              />
+              <MessageBox sendMessage={sendMessage} />
+            </>
+          )}
+          <button
+            onClick={() =>
+              setDisplay({
+                display: true,
+                regarding: "sendMessage",
+                data: null,
+              })
+            }
+          >
+            <img
+              src={messageIcon}
+              alt="message icon"
+              className="h-12 w-12 rounded-sm absolute bottom-5 right-5"
+            ></img>
+          </button>
           <div className="flex flex-row items-start justify-between text-black">
             <button onClick={handleExitGame} className="underline">
               {"<-"}exit
@@ -657,7 +759,7 @@ function Battleship() {
       {display.display && display.regarding === "gameCompleted" && (
         <GameCompletedDialogBox
           handleExitGame={handleExitGame}
-          winner={winner}
+          winner={winner as string}
         />
       )}
     </>

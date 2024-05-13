@@ -1,6 +1,13 @@
+import React from "react";
 import Button from "../../Button";
 
-function GameCompletedDialogBox({ handleExitGame, winner }) {
+function GameCompletedDialogBox({
+  handleExitGame,
+  winner,
+}: {
+  handleExitGame: () => void;
+  winner: string;
+}) {
   return (
     <>
       <div className="bg-black/60 h-screen w-screen fixed top-0 left-0 z-[1000]" />
@@ -15,6 +22,8 @@ function GameCompletedDialogBox({ handleExitGame, winner }) {
             <Button
               theme="red"
               text="Exit"
+              disabled={false}
+              style={{}}
               className="w-[50%]"
               callback={handleExitGame}
             />

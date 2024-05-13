@@ -1,11 +1,24 @@
 import React from "react";
+import { PropBoardCell } from "../../types/types";
 
-function OpponentBoard({ dropTorpedoes, opponentsBoard }) {
+function OpponentBoard({
+  dropTorpedoes,
+  opponentsBoard,
+}: {
+  dropTorpedoes: ({
+    rindex,
+    cindex,
+  }: {
+    rindex: number;
+    cindex: number;
+  }) => void;
+  opponentsBoard: PropBoardCell[][];
+}) {
   return (
     <div className="grid grid-rows-10 outline outline-black outline-[2px]">
-      {opponentsBoard.map((row, rindex) => (
+      {opponentsBoard.map((row: PropBoardCell[], rindex: number) => (
         <div key={`${rindex}-opponent`} className="grid grid-cols-10">
-          {row.map((ele, cindex) => (
+          {row.map((ele: PropBoardCell, cindex: number) => (
             <div key={`${rindex}-${cindex}-opponent`}>
               <div
                 style={

@@ -1,5 +1,21 @@
 import Button from "../../Button";
-function CreateRoomDialogBox({ CopyToClipBoard, removeDialogbox, display }) {
+import React from "react";
+
+interface PropDisplay {
+  display: boolean;
+  regarding: string;
+  data: null | string;
+}
+
+function CreateRoomDialogBox({
+  CopyToClipBoard,
+  removeDialogbox,
+  display,
+}: {
+  CopyToClipBoard: () => void;
+  removeDialogbox: () => void;
+  display: PropDisplay;
+}) {
   return (
     <>
       <div className="bg-black/60 h-screen w-screen fixed top-0 left-0 z-[1000]" />
@@ -7,14 +23,23 @@ function CreateRoomDialogBox({ CopyToClipBoard, removeDialogbox, display }) {
         <div className="flex flex-col gap-4">
           <p>Share this room ID to your friend</p>
           <Button
+            style={{}}
+            disabled={false}
             callback={CopyToClipBoard}
             theme="gray"
             className="w-[90%] mx-auto"
-            text={display.data}
+            text={display.data as string}
           />
         </div>
         <div className="flex justify-center">
-          <Button callback={removeDialogbox} theme="red" text="Close" />
+          <Button
+            className=""
+            disabled={false}
+            style={{}}
+            callback={removeDialogbox}
+            theme="red"
+            text="Close"
+          />
         </div>
       </div>
     </>

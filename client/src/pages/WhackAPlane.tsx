@@ -6,6 +6,7 @@ import blastImage from "../assets/images/whack-a-plane/explode.jpg";
 import Button from "../components/Button";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import LeaderBoard from "../components/whackaplane/LeaderBoard";
 import { UserInfoContext } from "../App";
 
 function WhackAPlane() {
@@ -24,6 +25,11 @@ function WhackAPlane() {
   const [score, setScore] = useState(0);
   const [delay, setDelay] = useState(2000);
   const [highScore, setHighScore] = useState(0);
+  const [delayInterval, setDelayInterval] = useState<NodeJS.Timeout | null>(
+    null
+  );
+  const [countdownInterval, setCountdownInterval] =
+    useState<NodeJS.Timeout | null>(null);
   const [countDown, setCountDown] = useState(COUNTDOWN_TIMER);
   const [hitObject, setHitObject] = useState(false);
   const [gameStatus, setGameStatus] = useState("uninitiated");
@@ -35,14 +41,14 @@ function WhackAPlane() {
     isBomb: false,
   });
 
-  const { user, token } = useContext(UserInfoContext);
+  const { token } = useContext(UserInfoContext);
   const getRandomPosition = () => {
     const canvas = canvasRef.current;
     if (!canvas)
       return { x: 0, y: 0, isGolden: false, isPlane: true, isBomb: false };
 
-    const maxX = canvas.width - 50;
-    const maxY = canvas.height - 50;
+    const maxX = (canvas as HTMLCanvasElement).width - 50;
+    const maxY = (canvas as HTMLCanvasElement).height - 50;
     const x = Math.floor(Math.random() * maxX);
     const y = Math.floor(Math.random() * maxY);
     const randomValue = Math.random();
@@ -62,20 +68,31 @@ function WhackAPlane() {
 
   useEffect(() => {
     const getHighScore = async () => {
-      const result = await axios.post(
-        "http://127.0.0.1:5000/api/whackaplane/gethighscore",
-        { token }
-      );
-      setHighScore(result.data.highScore);
+      try {
+        const result = await axios.post(
+          "http://127.0.0.1:5000/api/whackaplane/gethighscore",
+          { token }
+        );
+        setHighScore(result.data.highScore);
+      } catch (error) {
+        console.log(error);
+      }
     };
     getHighScore();
   }, []);
 
   const updateHighScore = async () => {
-    await axios.post("http://127.0.0.1:5000/api/whackaplane/updatehighscore", {
-      token,
-      score,
-    });
+    try {
+      await axios.post(
+        "http://127.0.0.1:5000/api/whackaplane/updatehighscore",
+        {
+          token,
+          score,
+        }
+      );
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   useEffect(() => {
@@ -84,21 +101,33 @@ function WhackAPlane() {
         updateHighScore();
         setHighScore(score);
       }
+
+      if (countdownInterval) clearInterval(countdownInterval);
+      if (delayInterval) clearInterval(delayInterval);
+
+      setCountdownInterval(null);
+      setDelayInterval(null);
     }
   }, [gameStatus]);
 
   useEffect(() => {
-    const handleClick = (event) => {
+    const handleClick: any = (event: React.MouseEvent<HTMLCanvasElement>) => {
       if (hitObject) return;
       const canvas = canvasRef.current;
       if (!canvas) return;
-      const ctx = canvas.getContext("2d");
-      const rect = canvas.getBoundingClientRect();
+      const ctx = (canvas as HTMLCanvasElement).getContext("2d");
+      if (!ctx) return;
+      const rect = (canvas as HTMLCanvasElement).getBoundingClientRect();
       const mouseX = event.clientX - rect.left;
       const mouseY = event.clientY - rect.top;
 
       const drawBlast = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(
+          0,
+          0,
+          (canvas as HTMLCanvasElement).width,
+          (canvas as HTMLCanvasElement).height
+        );
         ctx.drawImage(blast, planePosition.x, planePosition.y, 50, 50);
       };
       const render = () => {
@@ -127,9 +156,15 @@ function WhackAPlane() {
     if (gameStatus === "initiated" && !hitObject) {
       const canvas = canvasRef.current;
       if (!canvas) return;
-      const ctx = canvas.getContext("2d");
+      const ctx = (canvas as HTMLCanvasElement).getContext("2d");
+      if (!ctx) return;
       const drawPlane = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(
+          0,
+          0,
+          (canvas as HTMLCanvasElement).width,
+          (canvas as HTMLCanvasElement).height
+        );
         if (planePosition.isPlane) {
           ctx.drawImage(plane, planePosition.x, planePosition.y, 50, 50);
         } else if (planePosition.isGolden) {
@@ -149,13 +184,14 @@ function WhackAPlane() {
         setHitObject(false);
         setPlanePosition(getRandomPosition());
       }, delay);
-      canvas.addEventListener("click", handleClick);
-      return () => canvas.removeEventListener("click", handleClick);
+      (canvas as HTMLCanvasElement).addEventListener("click", handleClick);
+      return () =>
+        (canvas as HTMLCanvasElement).removeEventListener("click", handleClick);
     }
   }, [planePosition, gameStatus, hitObject]);
 
-  const sleep = (duration) => {
-    return new Promise((resolve, reject) => {
+  const sleep = (duration: number) => {
+    return new Promise<void>((resolve) => {
       setTimeout(() => resolve(), duration);
     });
   };
@@ -164,45 +200,48 @@ function WhackAPlane() {
     setScore(0);
     setCountDown(COUNTDOWN_TIMER);
     setHitObject(false);
-    setGameStatus("initiated");
+  };
+
+  const curtainDown3Seconds = async () => {
+    const countDownTimer = document.createElement("p");
+    countDownTimer.id = "countdown_timer";
+    document.body.appendChild(countDownTimer);
+    for (let i = 3; i > 0; i--) {
+      countDownTimer.innerText = `${i}`;
+      await sleep(1000);
+    }
+    document.body.removeChild(countDownTimer);
   };
 
   const handleStart = async () => {
     resetGame();
     setGameStatus("initiated");
 
-    const countDownTimer = document.createElement("p");
-    countDownTimer.id = "countdown_timer";
-    document.body.appendChild(countDownTimer);
-    for (let i = 3; i > 0; i--) {
-      countDownTimer.innerText = i;
-      await sleep(1000);
-    }
-    document.body.removeChild(countDownTimer);
-    setScore(0);
-    const delayInterval = setInterval(() => {
+    await curtainDown3Seconds();
+
+    let frequency = setInterval(() => {
       setDelay((prev) => {
         if (prev - 3 > 500) {
           return prev - 3;
         } else {
-          clearInterval(delayInterval);
           return 500;
         }
       });
     }, 1000);
     let countdownIterations = 0;
 
-    const countdownInterval = setInterval(() => {
+    setDelayInterval(frequency);
+    let timer = setInterval(() => {
       setCountDown((prev) => {
         countdownIterations++;
         if (countdownIterations >= COUNTDOWN_TIMER) {
           setGameStatus("over");
-          clearInterval(countdownInterval);
         }
         return prev - 1;
       });
     }, 1000);
 
+    setCountdownInterval(timer);
     setPlanePosition(getRandomPosition());
   };
 
@@ -242,6 +281,9 @@ function WhackAPlane() {
               </ul>
             </div>
             <Button
+              style={{}}
+              className=""
+              disabled={false}
               callback={() => handleStart()}
               theme="green"
               text="Start Game"
@@ -273,6 +315,7 @@ function WhackAPlane() {
             width={500}
             className="border border-black bg-white"
           />
+          <LeaderBoard />
         </main>
       )}
       {gameStatus === "over" && (
@@ -281,12 +324,16 @@ function WhackAPlane() {
             <h1 className="font-semibold text-[3rem]">Game Over!</h1>
             <p className="py-5">Score: {score}</p>
             <Button
+              style={{}}
+              disabled={false}
               text="Play Again!"
               theme="green"
               className="w-3/5"
               callback={handleStart}
             />
             <Button
+              disabled={false}
+              style={{}}
               text="Exit"
               theme="red"
               className="w-3/5"

@@ -2,7 +2,17 @@ import React from "react";
 import { Link } from "react-router-dom";
 import Button from "./Button";
 
-function GameCard({ name, href, image, description }) {
+function GameCard({
+  name,
+  href,
+  image,
+  description,
+}: {
+  name: string;
+  href: string;
+  image: any;
+  description: string;
+}) {
   return (
     <Link to={href} className="text-white flex flex-row items-start gap-10">
       <img
@@ -14,7 +24,14 @@ function GameCard({ name, href, image, description }) {
         <h1>{name}</h1>
         <p className="text-neutral-400">{description}</p>
         <div>
-          <Button text="Play" theme="green" />
+          <Button
+            style={{}}
+            className=""
+            disabled={false}
+            callback={() => {}}
+            text="Play"
+            theme="green"
+          />
         </div>
       </div>
     </Link>

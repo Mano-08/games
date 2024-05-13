@@ -1,6 +1,11 @@
+import React from "react";
 import Button from "../../Button";
 
-function OpponentLeftDialogBox({ handleExitGame }) {
+function OpponentLeftDialogBox({
+  handleExitGame,
+}: {
+  handleExitGame: () => void;
+}) {
   return (
     <>
       <div className="bg-black/60 h-screen w-screen fixed top-0 left-0 z-[1000]" />
@@ -9,6 +14,9 @@ function OpponentLeftDialogBox({ handleExitGame }) {
           <p>Your opponent has left the room</p>
           <div className="flex justify-center">
             <Button
+              style={{}}
+              disabled={false}
+              className=""
               theme="red"
               text="Exit Room"
               callback={() => handleExitGame()}

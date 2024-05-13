@@ -4,14 +4,21 @@ import { UserInfoContext } from "../App";
 import Cookies from "universal-cookie";
 import { jwtDecode } from "jwt-decode";
 import { toast } from "react-hot-toast";
+import { CustomJwtPayload } from "../types/types";
 
-function SignUp({ callback, success }) {
+function SignUp({
+  callback,
+  success,
+}: {
+  callback: () => void;
+  success: () => void;
+}) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const { setUser, setToken } = useContext(UserInfoContext);
   const cookies = new Cookies();
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     const usernamePattern = /^[a-zA-Z0-9]*$/;
     switch (name) {
@@ -40,7 +47,7 @@ function SignUp({ callback, success }) {
     });
   };
 
-  const handleRegister = async (event) => {
+  const handleRegister = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     if (username === "") {
       toast.error("Please enter username");
@@ -69,7 +76,7 @@ function SignUp({ callback, success }) {
             expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
             path: "/",
           });
-          const user = jwtDecode(response.data.token);
+          const user = jwtDecode<CustomJwtPayload>(response.data.token);
           setUser(user.userId);
           setToken(response.data.token);
         }
