@@ -1,8 +1,7 @@
-import React, { useContext, useEffect } from "react";
+import React, { useContext } from "react";
 import whack_a_plane from "../assets/images/whack-a-plane/whackAPlane.gif";
 import battle_ship from "../assets/images/battleship/battleship.gif";
 import { UserInfoContext } from "../App";
-import Cookies from "universal-cookie";
 import GameCard from "../components/GameCard";
 import SignUp from "../components/SignUp";
 import SignIn from "../components/SignIn";

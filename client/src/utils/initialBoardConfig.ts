@@ -1,4 +1,6 @@
-export const allShips = [
+import { PropShip } from "../types/types";
+
+export const allShips: PropShip[] = [
   {
     id: "carrier",
     placed: false,

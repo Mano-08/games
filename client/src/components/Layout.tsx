@@ -1,9 +1,10 @@
+import React, { ReactNode } from "react";
 import bg_img from "../assets/images/grass.jpg";
 import { useLocation } from "react-router-dom";
 import cloud1 from "../assets/images/cloud1.png";
 import cloud2 from "../assets/images/cloud2.png";
 
-function Layout({ children }) {
+function Layout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const { pathname } = location;
   if (

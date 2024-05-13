@@ -1,11 +1,15 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import send from "../../assets/images/battleship/send.jpg";
 import DOMPurify from "isomorphic-dompurify";
 import { toast } from "react-hot-toast";
 
-function MessageBox({ sendMessage }) {
+function MessageBox({
+  sendMessage,
+}: {
+  sendMessage: (message: string) => void;
+}) {
   const [message, setMessage] = useState("");
-  const handleSubmit = (event) => {
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const clean = DOMPurify.sanitize(message);
     sendMessage(clean);

@@ -1,4 +1,6 @@
+import React from "react";
 import Button from "../Button";
+import { PropShip } from "../../types/types";
 
 function SelectShip({
   vertical,
@@ -8,6 +10,14 @@ function SelectShip({
   handleResetBoard,
   handleSendReadyMessage,
   allShipsPlaced,
+}: {
+  vertical: boolean;
+  myShips: PropShip[];
+  isPlayerReady: boolean;
+  handleSelectShip: (ship: PropShip) => void;
+  handleResetBoard: () => void;
+  handleSendReadyMessage: () => void;
+  allShipsPlaced: boolean;
 }) {
   return (
     <div className="flex flex-col gap-3 py-2">
@@ -43,6 +53,7 @@ function SelectShip({
         callback={handleResetBoard}
       />
       <Button
+        className=""
         theme="green"
         text="Ready!"
         disabled={!allShipsPlaced || isPlayerReady}

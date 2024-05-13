@@ -1,9 +1,25 @@
-function MyBoard({ myBoard, handleMouseEnterCell, handlePlaceShip }) {
+import React from "react";
+import {
+  PropBoardCell,
+  PropHandleMouseEnterCell,
+  PropHandlePlaceShip,
+  PropShip,
+} from "../../types/types";
+
+function MyBoard({
+  myBoard,
+  handleMouseEnterCell,
+  handlePlaceShip,
+}: {
+  myBoard: PropBoardCell[][];
+  handleMouseEnterCell: PropHandleMouseEnterCell;
+  handlePlaceShip: PropHandlePlaceShip;
+}) {
   return (
     <div className="grid grid-rows-10 outline outline-black outline-[2px]">
-      {myBoard.map((row, rindex) => (
+      {myBoard.map((row: PropBoardCell[], rindex: number) => (
         <div key={rindex} className="grid grid-cols-10">
-          {row.map((ele, cindex) => (
+          {row.map((ele: PropBoardCell, cindex: number) => (
             <div key={`${rindex}-${cindex}`}>
               <div
                 style={

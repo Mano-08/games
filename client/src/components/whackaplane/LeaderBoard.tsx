@@ -3,7 +3,9 @@ import { UserInfoContext } from "../../App";
 import axios from "axios";
 
 function LeaderBoard() {
-  const [leaderBoard, setLeaderBoard] = useState([]);
+  const [leaderBoard, setLeaderBoard] = useState<
+    { username: string; score: string }[]
+  >([]);
   const { token } = useContext(UserInfoContext);
 
   useEffect(() => {

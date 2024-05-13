@@ -1,7 +1,14 @@
+import React from "react";
 import navyShip from "../../assets/images/battleship/navyship.png";
 import Button from "../Button";
 
-function LandingPage({ handleJoinRoom, handleCreateRoom }) {
+function LandingPage({
+  handleJoinRoom,
+  handleCreateRoom,
+}: {
+  handleJoinRoom: () => void;
+  handleCreateRoom: () => void;
+}) {
   return (
     <main className="w-screen h-screen overflow-hidden flex items-center justify-center px-[20vw]">
       <div className="flex flex-col gap-3 p-4 items-center outline outline-2 outline-black rounded-2xl bg-sky-200/50 backdrop-blur-sm	">
@@ -31,8 +38,18 @@ function LandingPage({ handleJoinRoom, handleCreateRoom }) {
           </ul>
         </div>
         <div className="flex flex-row items-center gap-5 my-4">
-          <Button callback={handleJoinRoom} theme="green" text="Join room" />
           <Button
+            className=""
+            style={{}}
+            disabled={false}
+            callback={handleJoinRoom}
+            theme="green"
+            text="Join room"
+          />
+          <Button
+            className=""
+            style={{}}
+            disabled={false}
             callback={handleCreateRoom}
             theme="green"
             text="Create room"
